@@ -1,103 +1,100 @@
 # 🗞️ NostriFeed Bot
 
-**NostriFeed** é um bot que conecta o mundo dos **feeds RSS tradicionais** com o universo **descentralizado do Nostr**.
+![Node.js](https://img.shields.io/badge/node-%3E=18.x-green)
+![npm](https://img.shields.io/badge/npm-%3E=9.x-blue)
+![License](https://img.shields.io/github/license/drexduarte/nostrifeed-bot)
+![Last Commit](https://img.shields.io/github/last-commit/drexduarte/nostrifeed-bot)
+![Issues](https://img.shields.io/github/issues/drexduarte/nostrifeed-bot)
+![Stars](https://img.shields.io/github/stars/drexduarte/nostrifeed-bot?style=social)
 
-Com ele, você pode importar automaticamente notícias de portais como **NYTimes**, **BBC**, blogs ou qualquer site com RSS — e publicá-las em **relays Nostr** em tempo real, como eventos assinados pela sua chave.
+> 🚀 **Nostrifeed Bot** is your bridge between traditional news and the decentralized Nostr network. It fetches RSS feeds and posts the latest headlines to your favorite relays — automatically, intelligently, and with filters to keep things relevant.
 
-<p align="center">
-  <img src="https://img.shields.io/github/license/drexduarte/nostrifeed-bot" alt="MIT License">
-  <img src="https://img.shields.io/github/last-commit/drexduarte/nostrifeed-bot" alt="Last Commit">
-  <img src="https://img.shields.io/badge/made%20with-%E2%9D%A4-orange" alt="Made with Love">
-</p>
+## Features
 
----
-
-## 🚀 Principais funcionalidades
-
-- 🔁 Converte automaticamente feeds RSS em eventos Nostr
-- 🧠 Suporte a múltiplos feeds e múltiplos relays via arquivo de configuração
-- 🧵 Inclui título, link e fonte da notícia no conteúdo
-- 🕓 Atualização periódica configurável (padrão: 30 minutos)
-- ⚡ Assinatura via chave Nostr (ed25519)
-- 💬 Compatível com apps como Damus, Amethyst, Iris, etc.
+- 🌐 Supports multiple RSS feeds and relays
+- ✍️ Publishes news headlines to Nostr as kind:1 events
+- 🔎 Filters posts by category or title keywords
+- 🧠 Avoids duplicate posts using a persistent local store
+- ⚙️ Fully configurable via `config.json`
+- 🔐 Secure key management via `.env`
 
 ---
 
-## 🧰 Tecnologias utilizadas
+## Setup
 
-- [Node.js](https://nodejs.org)
-- [rss-parser](https://www.npmjs.com/package/rss-parser)
-- [nostr-tools](https://github.com/nbd-wtf/nostr-tools)
-- WebSockets para publicação em relays
+1. Clone the repo:
 
----
+```bash
+git clone https://github.com/drexduarte/nostrifeed-bot.git
+cd nostrifeed-bot
+```
 
-## 📦 Como usar
+2. Install dependencies:
 
-1. Clone este repositório:
-   ```bash
-   git clone https://github.com/seu-usuario/nostrifeed-bot.git
-   cd nostrifeed-bot
-   ```
+```bash
+npm install
+```
 
-2. Crie um arquivo `.env` com sua chave privada:
-   ```env
-   NOSTR_PRIVATE_KEY=sua_chave_em_hex
-   ```
+3. Create a `.env` file with your Nostr private key:
 
-3. Configure os feeds RSS e relays Nostr no arquivo `config.json`:
-   ```json
-   {
-     "feeds": [
-       "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-       "https://feeds.bbci.co.uk/news/rss.xml"
-     ],
-     "relays": [
-       "wss://relay.damus.io",
-       "wss://nos.lol"
-     ]
-   }
-   ```
+```env
+NOSTR_PRIVATE_KEY=your_hex_private_key_here
+```
 
-4. Instale as dependências:
-   ```bash
-   npm install
-   ```
+4. Edit `config.json` to set your desired RSS feeds, relays, filters, and other preferences.
 
-5. Execute o bot:
-   ```bash
-   node index.js
-   ```
+5. Start the bot:
 
-O bot publicará nos relays definidos as últimas notícias dos feeds RSS cadastrados.
+```bash
+node index.js
+```
+
+The bot will check RSS feeds and publish the latest news to Nostr every 30 minutes.
 
 ---
 
-## ✨ Exemplo de publicação
+## Example Output
+
+Here’s what a published Nostr event might look like:
 
 ```
-🗞️ *Título da Notícia*
-https://link-da-noticia.com
-Fonte: BBC
+📰 *BBC News*  
+"Climate change: World is 'failing to tackle crisis', UN warns"  
+🔗 https://www.bbc.co.uk/news/science-environment-123456
+Source: Business News #Newstr
+
 ```
 
 ---
+## Contributing
 
-## 🛠️ Contribuindo
+Contributions are welcome! Feel free to fork this repo, create a new branch, and submit a pull request. If you find any bugs or have suggestions for improvements, open an issue to discuss.
 
-Quer colaborar? Sinta-se à vontade para enviar sugestões, issues ou pull requests! Confira o [guia de contribuição](CONTRIBUTING.md) para começar.
-
----
-
-## 💡 Ideias futuras
-
-- Painel web para gerenciar feeds dinamicamente
-- Suporte a conteúdo completo via Readability
-- Agendamento inteligente e curadoria baseada em zaps
-- Suporte a banco de dados para histórico de publicações
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m 'Add my feature'`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a pull request
 
 ---
 
-## 📄 Licença
+## License
 
-Este projeto está licenciado sob a [MIT License](LICENSE).
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+# Next Steps
+
+Here are a few ideas for future improvements:
+
+- 🔍 Support full-text content extraction from articles
+- 🧵 Publish threaded event summaries grouped by topic
+- 🔗 Add NIP-05 verified profile management and updates
+- 🌍 Improve support for multilingual feeds and summaries
+- 🗂️ Add tagging based on article topics or sentiment analysis
+- 📊 Dashboard for monitoring bot activity and stats
+
+---
+
+Built with 💜 using [nostr-tools](https://github.com/nostr-protocol/nostr-tools).
