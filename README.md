@@ -15,7 +15,7 @@ Com ele, você pode importar automaticamente notícias de portais como **NYTimes
 ## 🚀 Principais funcionalidades
 
 - 🔁 Converte automaticamente feeds RSS em eventos Nostr
-- 🧠 Suporte a múltiplos feeds e múltiplos relays
+- 🧠 Suporte a múltiplos feeds e múltiplos relays via arquivo de configuração
 - 🧵 Inclui título, link e fonte da notícia no conteúdo
 - 🕓 Atualização periódica configurável (padrão: 30 minutos)
 - ⚡ Assinatura via chave Nostr (ed25519)
@@ -36,7 +36,7 @@ Com ele, você pode importar automaticamente notícias de portais como **NYTimes
 
 1. Clone este repositório:
    ```bash
-   git clone https://github.com/drexduarte/nostrifeed-bot.git
+   git clone https://github.com/seu-usuario/nostrifeed-bot.git
    cd nostrifeed-bot
    ```
 
@@ -45,12 +45,26 @@ Com ele, você pode importar automaticamente notícias de portais como **NYTimes
    NOSTR_PRIVATE_KEY=sua_chave_em_hex
    ```
 
-3. Instale as dependências:
+3. Configure os feeds RSS e relays Nostr no arquivo `config.json`:
+   ```json
+   {
+     "feeds": [
+       "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+       "https://feeds.bbci.co.uk/news/rss.xml"
+     ],
+     "relays": [
+       "wss://relay.damus.io",
+       "wss://nos.lol"
+     ]
+   }
+   ```
+
+4. Instale as dependências:
    ```bash
    npm install
    ```
 
-4. Execute o bot:
+5. Execute o bot:
    ```bash
    node index.js
    ```

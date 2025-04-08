@@ -1,0 +1,11 @@
+{
+  "feeds": [
+    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "https://feeds.bbci.co.uk/news/rss.xml",
+    "https://g1.globo.com/dynamo/rss2.xml"
+  ],
+  "relays": [
+    "wss://relay.damus.io",
+    "wss://nos.lol"
+  ]
+}
