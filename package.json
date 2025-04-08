@@ -1,17 +1,18 @@
 {
   "name": "nostrifeed-bot",
   "version": "1.0.0",
-  "description": "Bot que publica automaticamente notícias de feeds RSS em relays Nostr.",
+  "description": "Bot que busca notícias de feeds RSS e publica no Nostr.",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": ["nostr", "rss", "bot", "nodejs", "news", "decentralized"],
-  "author": "drexduarte",
+  "keywords": ["nostr", "rss", "news", "bot", "nip-05"],
+  "author": "Você",
   "license": "MIT",
   "dependencies": {
     "dotenv": "^16.0.3",
-    "nostr-tools": "^1.12.0",
+    "nostr-tools": "^1.14.0",
     "rss-parser": "^3.12.0"
   }
 }

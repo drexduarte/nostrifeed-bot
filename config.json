@@ -2,10 +2,15 @@
   "feeds": [
     "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
     "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://g1.globo.com/dynamo/rss2.xml"
+    "https://g1.globo.com/dynamo/rss2.xml",
+    "https://www.cnnbrasil.com.br/rss"
   ],
   "relays": [
     "wss://relay.damus.io",
-    "wss://nos.lol"
-  ]
+    "wss://nos.lol",
+    "wss://nostr.mom",
+    "wss://nostr-pub.wellorder.net"
+  ],
+  "itemsPerFeed": 1,
+  "maxPublishedLinks": 500
 }
