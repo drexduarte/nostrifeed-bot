@@ -9,6 +9,7 @@ const feeds = config.feeds;
 const relays = config.relays;
 const itemsPerFeed = config.itemsPerFeed || 5;
 const maxPublishedLinks = config.maxPublishedLinks || 500;
+const filters = config.filters || {};
 
 const publishedFile = 'published.json';
 let publishedLinks = { links: [] };
@@ -24,11 +25,41 @@ function delay(ms) {
 }
 
 function savePublishedLinks() {
+  // Mantém apenas os últimos N links publicados
   if (publishedLinks.links.length > maxPublishedLinks) {
     publishedLinks.links = publishedLinks.links.slice(-maxPublishedLinks);
   }
   fs.writeFileSync(publishedFile, JSON.stringify(publishedLinks, null, 2));
 }
+
+function normalizeLink(link) {
+  try {
+    const url = new URL(link);
+    url.search = '';
+    return url.toString();
+  } catch {
+    return link;
+  }
+}
+
+function shouldFilterItem(item) {
+  const title = item.title.toLowerCase();
+
+  const categories = (item.categories || [])
+    .filter(c => typeof c === 'string')
+    .map(c => c.toLowerCase());
+
+  if (filters.exclude_keywords) {
+    for (const keyword of filters.exclude_keywords) {
+      const kw = keyword.toLowerCase();
+      if (title.includes(kw)) return true;
+      if (categories.some(cat => cat.includes(kw))) return true;
+    }
+  }
+
+  return false;
+}
+
 
 async function publishToRelays(event) {
   for (const url of relays) {
@@ -61,12 +92,21 @@ async function fetchAndPublish() {
     try {
       const feed = await parser.parseURL(feedUrl);
       for (const item of feed.items.slice(0, itemsPerFeed)) {
-        if (publishedLinks.links.includes(item.link)) {
+        const normalizedLink = normalizeLink(item.link);
+
+        if (publishedLinks.links.includes(normalizedLink)) {
           console.log(`🔁 Já publicada: ${item.link}`);
           continue;
         }
 
-        const content = `🗞️ ${item.title}\n${item.link}\nSource: ${feed.title}`;
+        if (shouldFilterItem(item)) {
+          console.log(`⛔ Ignorada por filtro: ${item.title}`);
+          continue;
+        }
+
+        const content = `🗞️ ${item.title}
+${item.link}
+Fonte: ${feed.title}`;
         const unsignedEvent = {
           kind: 1,
           pubkey,
@@ -78,7 +118,7 @@ async function fetchAndPublish() {
         unsignedEvent.sig = getSignature(unsignedEvent, privateKey);
         await publishToRelays(unsignedEvent);
 
-        publishedLinks.links.push(item.link);
+        publishedLinks.links.push(normalizedLink);
         savePublishedLinks();
 
         await delay(2000); // Aguarda 2 segundos entre as publicações
