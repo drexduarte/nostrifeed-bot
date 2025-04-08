@@ -4,6 +4,12 @@
 
 Com ele, você pode importar automaticamente notícias de portais como **NYTimes**, **BBC**, blogs ou qualquer site com RSS — e publicá-las em **relays Nostr** em tempo real, como eventos assinados pela sua chave.
 
+<p align="center">
+  <img src="https://img.shields.io/github/license/drexduarte/nostrifeed-bot" alt="MIT License">
+  <img src="https://img.shields.io/github/last-commit/drexduarte/nostrifeed-bot" alt="Last Commit">
+  <img src="https://img.shields.io/badge/made%20with-%E2%9D%A4-orange" alt="Made with Love">
+</p>
+
 ---
 
 ## 🚀 Principais funcionalidades
@@ -30,7 +36,7 @@ Com ele, você pode importar automaticamente notícias de portais como **NYTimes
 
 1. Clone este repositório:
    ```bash
-   git clone https://github.com/seu-usuario/nostrifeed-bot.git
+   git clone https://github.com/drexduarte/nostrifeed-bot.git
    cd nostrifeed-bot
    ```
 
@@ -63,6 +69,12 @@ Fonte: BBC
 
 ---
 
+## 🛠️ Contribuindo
+
+Quer colaborar? Sinta-se à vontade para enviar sugestões, issues ou pull requests! Confira o [guia de contribuição](CONTRIBUTING.md) para começar.
+
+---
+
 ## 💡 Ideias futuras
 
 - Painel web para gerenciar feeds dinamicamente
@@ -72,10 +84,6 @@ Fonte: BBC
 
 ---
 
-Feito com ☕, código aberto e amor pelo Nostr 🧡
+## 📄 Licença
 
----
-
-### 📄 Licença
-
-MIT License
+Este projeto está licenciado sob a [MIT License](LICENSE).
