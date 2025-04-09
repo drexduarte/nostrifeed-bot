@@ -14,7 +14,7 @@ jest.mock('fs', () => {
 });
 
 const fs = require('fs');
-const store = require('../store');
+const store = require('../app/store');
 
 describe('store.js', () => {
   beforeEach(() => {
@@ -37,7 +37,7 @@ describe('store.js', () => {
     fs.readFileSync.mockReturnValueOnce(JSON.stringify({ links: longList }));
 
     jest.resetModules();
-    const store2 = require('../store');
+    const store2 = require('../app/store');
 
     store2.addPublishedLink('https://new.com', 500);
     const links = store2.getPublishedLinks();
@@ -46,7 +46,7 @@ describe('store.js', () => {
 
   it('still saves even if max is zero', () => {
     jest.resetModules();
-    const store3 = require('../store');
+    const store3 = require('../app/store');
     store3.addPublishedLink('https://zero.com', 0);
     const links = store3.getPublishedLinks();
     expect(links).toEqual(['https://zero.com']);
@@ -55,7 +55,7 @@ describe('store.js', () => {
   it('initializes with empty list if file does not exist', () => {
     fs.existsSync.mockReturnValue(false);
     jest.resetModules();
-    const store4 = require('../store');
+    const store4 = require('../app/store');
     expect(store4.getPublishedLinks()).toEqual([]);
   });
 });

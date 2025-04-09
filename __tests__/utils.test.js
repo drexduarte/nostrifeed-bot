@@ -1,4 +1,4 @@
-const { normalizeLink, delay } = require('../utils');
+const { normalizeLink, delay } = require('../app/utils');
 
 describe('normalizeLink', () => {
   it('removes query parameters from URL', () => {

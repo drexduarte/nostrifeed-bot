@@ -59,7 +59,7 @@ The bot will check RSS feeds and publish the latest news to Nostr every 30 minut
 To generate a new Nostr key pair (`nsec` and `npub`), you can run the script provided in the project:
 
 ```bash
-node generate-key.js
+node app/generate-key.js
 ```
 
 This will output both your private and public keys in raw hex and NIP-19 encoded formats:

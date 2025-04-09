@@ -1,4 +1,4 @@
-const { shouldFilterItem } = require('../filters');
+const { shouldFilterItem } = require('../app/filters');
 
 describe('shouldFilterItem', () => {
   const filters = {

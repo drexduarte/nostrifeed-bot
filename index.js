@@ -2,11 +2,11 @@ require('dotenv').config();
 const Parser = require('rss-parser');
 const { getPublicKey, getEventHash, getSignature } = require('nostr-tools');
 
-const { getConfig, watchConfig } = require('./config');
-const { shouldFilterItem } = require('./filters');
-const { delay, normalizeLink } = require('./utils');
-const { getPublishedLinks, addPublishedLink } = require('./store');
-const { publishToRelays } = require('./publisher');
+const { getConfig, watchConfig } = require('./app/config');
+const { shouldFilterItem } = require('./app/filters');
+const { delay, normalizeLink } = require('./app/utils');
+const { getPublishedLinks, addPublishedLink } = require('./app/store');
+const { publishToRelays } = require('./app/publisher');
 
 const parser = new Parser();
 const privateKey = process.env.NOSTR_PRIVATE_KEY;

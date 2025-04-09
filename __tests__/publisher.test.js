@@ -11,7 +11,7 @@ jest.mock('nostr-tools', () => {
   };
 });
 
-const { publishToRelays } = require('../publisher');
+const { publishToRelays } = require('../app/publisher');
 const { relayInit } = require('nostr-tools');
 
 describe('publishToRelays', () => {
