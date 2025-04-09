@@ -12,7 +12,7 @@ const parser = new Parser();
 const privateKey = process.env.NOSTR_PRIVATE_KEY;
 const pubkey = getPublicKey(privateKey);
 
-// Recarrega config dinamicamente
+// Dynamically reload config file on changes
 watchConfig();
 
 async function fetchAndPublish() {
@@ -62,7 +62,7 @@ async function fetchAndPublish() {
   }
 }
 
-// Executa a cada minuto após o término da execução anterior
+// Runs every minute after the previous execution finishes
 async function loop() {
   await fetchAndPublish();
   setTimeout(loop, 60 * 1000);

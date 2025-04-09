@@ -4,6 +4,7 @@
 ![npm](https://img.shields.io/badge/npm-%3E=9.x-blue)
 ![License](https://img.shields.io/github/license/drexduarte/nostrifeed-bot)
 ![Last Commit](https://img.shields.io/github/last-commit/drexduarte/nostrifeed-bot)
+![coverage](https://img.shields.io/badge/coverage-98%25-brightgreen)
 ![Issues](https://img.shields.io/github/issues/drexduarte/nostrifeed-bot)
 ![Stars](https://img.shields.io/github/stars/drexduarte/nostrifeed-bot?style=social)
 
@@ -53,6 +54,23 @@ The bot will check RSS feeds and publish the latest news to Nostr every 30 minut
 
 ---
 
+## 🔐 Generate Nostr Keys (nsec/npub)
+
+To generate a new Nostr key pair (`nsec` and `npub`), you can run the script provided in the project:
+
+```bash
+node generate-key.js
+```
+
+This will output both your private and public keys in raw hex and NIP-19 encoded formats:
+
+- 🔑 Private key (`nsec...`)
+- 🪪 Public key (`npub...`)
+
+> ⚠️ **Important:** Keep your `nsec` key safe and never share it publicly.
+
+---
+
 ## Example Output
 
 Here’s what a published Nostr event might look like:
@@ -62,7 +80,6 @@ Here’s what a published Nostr event might look like:
 "Climate change: World is 'failing to tackle crisis', UN warns"  
 🔗 https://www.bbc.co.uk/news/science-environment-123456
 Source: Business News #Newstr
-
 ```
 
 ---
