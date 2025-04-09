@@ -7,7 +7,7 @@
 ![Issues](https://img.shields.io/github/issues/drexduarte/nostrifeed-bot)
 ![Stars](https://img.shields.io/github/stars/drexduarte/nostrifeed-bot?style=social)
 
-> 🚀 **Nostrifeed Bot** is your bridge between traditional news and the decentralized Nostr network. It fetches RSS feeds and posts the latest headlines to your favorite relays — automatically, intelligently, and with filters to keep things relevant.
+> 🚀 **NostriFeed Bot** is your bridge between traditional news and the decentralized Nostr network. It fetches RSS feeds and posts the latest headlines to your favorite relays — automatically, intelligently, and with filters to keep things relevant.
 
 ## Features
 

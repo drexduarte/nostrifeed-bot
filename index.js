@@ -4,12 +4,18 @@ const Parser = require('rss-parser');
 const { relayInit, getEventHash, getPublicKey, getSignature } = require('nostr-tools');
 
 const parser = new Parser();
-const config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
-const feeds = config.feeds;
-const relays = config.relays;
-const itemsPerFeed = config.itemsPerFeed || 5;
-const maxPublishedLinks = config.maxPublishedLinks || 500;
-const filters = config.filters || {};
+let config = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
+
+// Recarregar config.json dinamicamente quando for modificado
+fs.watchFile('config.json', () => {
+  try {
+    const newConfig = JSON.parse(fs.readFileSync('config.json', 'utf-8'));
+    Object.assign(config, newConfig);
+    console.log('🔄 config.json recarregado com sucesso!');
+  } catch (err) {
+    console.error('❌ Erro ao recarregar config.json:', err);
+  }
+});
 
 const publishedFile = 'published.json';
 let publishedLinks = { links: [] };
@@ -25,9 +31,8 @@ function delay(ms) {
 }
 
 function savePublishedLinks() {
-  // Mantém apenas os últimos N links publicados
-  if (publishedLinks.links.length > maxPublishedLinks) {
-    publishedLinks.links = publishedLinks.links.slice(-maxPublishedLinks);
+  if (publishedLinks.links.length > (config.maxPublishedLinks || 500)) {
+    publishedLinks.links = publishedLinks.links.slice(-(config.maxPublishedLinks || 500));
   }
   fs.writeFileSync(publishedFile, JSON.stringify(publishedLinks, null, 2));
 }
@@ -44,11 +49,11 @@ function normalizeLink(link) {
 
 function shouldFilterItem(item) {
   const title = item.title.toLowerCase();
-
   const categories = (item.categories || [])
     .filter(c => typeof c === 'string')
     .map(c => c.toLowerCase());
 
+  const filters = config.filters || {};
   if (filters.exclude_keywords) {
     for (const keyword of filters.exclude_keywords) {
       const kw = keyword.toLowerCase();
@@ -60,9 +65,8 @@ function shouldFilterItem(item) {
   return false;
 }
 
-
 async function publishToRelays(event) {
-  for (const url of relays) {
+  for (const url of config.relays) {
     const relay = relayInit(url);
 
     relay.on('notice', msg => {
@@ -88,10 +92,10 @@ async function publishToRelays(event) {
 }
 
 async function fetchAndPublish() {
-  for (const feedUrl of feeds) {
+  for (const feedUrl of config.feeds) {
     try {
       const feed = await parser.parseURL(feedUrl);
-      for (const item of feed.items.slice(0, itemsPerFeed)) {
+      for (const item of feed.items.slice(0, config.itemsPerFeed || 5)) {
         const normalizedLink = normalizeLink(item.link);
 
         if (publishedLinks.links.includes(normalizedLink)) {
