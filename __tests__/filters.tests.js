@@ -29,4 +29,21 @@ describe('shouldFilterItem', () => {
     const item = {};
     expect(shouldFilterItem(item, filters)).toBe(false);
   });
+
+  it('filters by object-based category with value field', () => {
+    const item = { title: 'News headline', categories: [{ value: 'futebol' }] };
+    const filters = { exclude_keywords: ['futebol'] };
+    expect(shouldFilterItem(item, filters)).toBe(true);
+  });
+
+  it('filters by object-based category with _ field', () => {
+    const item = { title: 'News headline', categories: [{ _: 'celebrity' }] };
+    const filters = { exclude_keywords: ['celebrity'] };
+    expect(shouldFilterItem(item, filters)).toBe(true);
+  });
+
+  it('handles category object without value or _', () => {
+    const item = { title: 'News', categories: [{ unknown: 'none' }] };
+    expect(shouldFilterItem(item, filters)).toBe(false);
+  });
 });

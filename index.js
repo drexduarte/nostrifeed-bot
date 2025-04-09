@@ -5,7 +5,7 @@ const { getPublicKey, getEventHash, getSignature } = require('nostr-tools');
 const { getConfig, watchConfig } = require('./app/config');
 const { shouldFilterItem } = require('./app/filters');
 const { delay, normalizeLink } = require('./app/utils');
-const { getPublishedLinks, addPublishedLink } = require('./app/store');
+const store = require('./app/store');
 const { publishToRelays } = require('./app/publisher');
 
 const parser = new Parser();
@@ -22,7 +22,7 @@ async function fetchAndPublish() {
   const itemsPerFeed = config.itemsPerFeed || 5;
   const maxStoredLinks = config.maxStoredLinks || 500;
   const filters = config.filters || {};
-  const publishedLinks = getPublishedLinks();
+  const publishedLinks = store.getPublishedLinks().map(entry => entry.url);
 
   for (const feedUrl of feeds) {
     try {
@@ -40,7 +40,11 @@ async function fetchAndPublish() {
           continue;
         }
 
-        const content = `🗞️ ${item.title}\n${item.link}\nFonte: ${feed.title}`;
+        const content = `🗞️ ${item.title}
+
+${item.link}
+
+Source: ${feed.title} #Newstr`;
         const unsignedEvent = {
           kind: 1,
           pubkey,
@@ -53,7 +57,16 @@ async function fetchAndPublish() {
         unsignedEvent.sig = getSignature(unsignedEvent, privateKey);
 
         await publishToRelays(unsignedEvent, relays);
-        addPublishedLink(normalizedLink, maxStoredLinks);
+
+        let category = '';
+        if (item.categories && item.categories.length > 0) {
+          const first = item.categories[0];
+          category = typeof first === 'string'
+            ? first
+            : (first.value || first._ || '');
+        }
+        store.addPublishedLink(normalizedLink, maxStoredLinks, category);
+
         await delay(2000);
       }
     } catch (err) {

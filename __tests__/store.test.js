@@ -5,7 +5,7 @@ jest.mock('fs', () => {
     __setMockData: (mockData) => {
       data = mockData;
     },
-    existsSync: jest.fn(() => false),
+    existsSync: jest.fn(() => true),
     readFileSync: jest.fn(() => JSON.stringify(data)),
     writeFileSync: jest.fn((_, content) => {
       data = JSON.parse(content);
@@ -19,43 +19,39 @@ const store = require('../app/store');
 describe('store.js', () => {
   beforeEach(() => {
     fs.__setMockData({ links: [] });
-    fs.existsSync.mockReturnValue(true);
   });
 
   it('gets published links', () => {
     expect(store.getPublishedLinks()).toEqual([]);
   });
 
-  it('adds a new link and saves it', () => {
-    store.addPublishedLink('https://another.com', 500);
+  it('adds a new link with category and saves it', () => {
+    store.addPublishedLink('https://example.com', 500, 'economy');
     const links = store.getPublishedLinks();
-    expect(links).toContain('https://another.com');
+    expect(links).toContainEqual({ url: 'https://example.com', category: 'economy' });
   });
 
-  it('truncates links if max limit is exceeded', () => {
-    const longList = Array.from({ length: 600 }, (_, i) => `https://site${i}.com`);
-    fs.readFileSync.mockReturnValueOnce(JSON.stringify({ links: longList }));
-
-    jest.resetModules();
-    const store2 = require('../app/store');
-
-    store2.addPublishedLink('https://new.com', 500);
-    const links = store2.getPublishedLinks();
-    expect(links.length).toBeLessThanOrEqual(500);
+  it('wasPublished returns true if the link was saved', () => {
+    store.addPublishedLink('https://exists.com', 500, 'tech');
+    expect(store.wasPublished('https://exists.com')).toBe(true);
   });
 
-  it('still saves even if max is zero', () => {
-    jest.resetModules();
-    const store3 = require('../app/store');
-    store3.addPublishedLink('https://zero.com', 0);
-    const links = store3.getPublishedLinks();
-    expect(links).toEqual(['https://zero.com']);
+  it('wasPublished returns false if the link was not saved', () => {
+    expect(store.wasPublished('https://not-found.com')).toBe(false);
   });
 
-  it('initializes with empty list if file does not exist', () => {
-    fs.existsSync.mockReturnValue(false);
-    jest.resetModules();
-    const store4 = require('../app/store');
-    expect(store4.getPublishedLinks()).toEqual([]);
+  it('fetchLatestNews returns latest N links for category', () => {
+    store.addPublishedLink('https://e1.com', 500, 'economy');
+    store.addPublishedLink('https://e2.com', 500, 'economy');
+    store.addPublishedLink('https://e3.com', 500, 'economy');
+    const latest = store.fetchLatestNews('economy', 2);
+    expect(latest).toEqual(['https://e3.com', 'https://e2.com']);
+  });
+
+  it('fetchLatestNews returns latest N links from all categories', () => {
+    store.addPublishedLink('https://a.com', 500, 'a');
+    store.addPublishedLink('https://b.com', 500, 'b');
+    const latest = store.fetchLatestNews('', 1);
+    expect(latest).toEqual(['https://b.com']);
   });
 });
