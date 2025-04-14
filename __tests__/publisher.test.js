@@ -56,7 +56,7 @@ describe('publishToRelays', () => {
     await publishToRelays(event, ['wss://success.test']);
     jest.runOnlyPendingTimers();
 
-    expect(consoleSpy).toHaveBeenCalledWith('✅ Sucesso ao publicar em wss://success.test');
+    expect(consoleSpy).toHaveBeenCalledWith('✅ Successfully published to wss://success.test');
 
     consoleSpy.mockRestore();
   });
