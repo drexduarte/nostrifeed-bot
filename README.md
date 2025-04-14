@@ -4,7 +4,7 @@
 ![npm](https://img.shields.io/badge/npm-%3E=9.x-blue)
 ![License](https://img.shields.io/github/license/drexduarte/nostrifeed-bot)
 ![Last Commit](https://img.shields.io/github/last-commit/drexduarte/nostrifeed-bot)
-![coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
+![coverage](https://img.shields.io/badge/coverage-96%25-brightgreen)
 ![Issues](https://img.shields.io/github/issues/drexduarte/nostrifeed-bot)
 ![Stars](https://img.shields.io/github/stars/drexduarte/nostrifeed-bot?style=social)
 

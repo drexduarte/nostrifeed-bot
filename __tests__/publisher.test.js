@@ -68,7 +68,7 @@ it('logs failure when publish rejects', async () => {
     connect: jest.fn().mockResolvedValue(),
     publish: jest.fn(() => ({
       then: () => ({
-        catch: (cb) => cb({ message: 'rejected by relay' })
+        catch: (cb) => cb('rejected by relay')
       }),
       on: jest.fn()
     })),
@@ -103,6 +103,41 @@ it('logs failure when publish rejects', async () => {
 
     expect(errorRelay.connect).toHaveBeenCalled();
     expect(errorRelay.close).toHaveBeenCalled();
+  });
+
+  it('handles relay string errors gracefully', async () => {
+    const errorRelay = {
+      connect: jest.fn().mockRejectedValue('fail string'),
+      publish: jest.fn(),
+      on: jest.fn(),
+      close: jest.fn()
+    };
+
+    relayInit.mockReturnValue(errorRelay);
+
+    const event = { id: '123', content: 'Test' };
+    await publishToRelays(event, ['wss://failstring.test']);
+    jest.runOnlyPendingTimers();
+
+    expect(errorRelay.connect).toHaveBeenCalled();
+    expect(errorRelay.close).toHaveBeenCalled();
+  });
+
+  it('handles publish failures gracefully', async () => {
+    const relay = {
+      connect: jest.fn().mockResolvedValue(),
+      publish: jest.fn(() => Promise.reject(new Error('publish failed'))),
+      on: jest.fn(),
+      close: jest.fn()
+    };
+
+    relayInit.mockReturnValue(relay);
+    const event = { id: '999', content: 'Fail me' };
+    await publishToRelays(event, ['wss://failing.test']);
+    jest.runOnlyPendingTimers();
+
+    expect(relay.publish).toHaveBeenCalled();
+    expect(relay.close).toHaveBeenCalled();
   });
 
   it('handles publish failures gracefully', async () => {

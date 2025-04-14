@@ -38,47 +38,48 @@ function buildReply(event, content) {
 async function respondToMentions() {
   for (const relayUrl of RELAYS) {
     const relay = relayInit(relayUrl);
-    await relay.connect();
 
-    relay.on('error', () => {
-      console.error(`Failed to connect to ${relayUrl}`);
-    });
+    try {
+      await relay.connect();
 
-    const sub = relay.sub([
-      {
-        kinds: [1],
-        '#p': [publicKey], // menção direta via tag
-        since: Math.floor(Date.now() / 1000) - 60, // últimos 60 segundos
-      },
-    ]);
+      const sub = relay.sub([
+        {
+          kinds: [1],
+          '#p': [publicKey], // menção direta via tag
+          since: Math.floor(Date.now() / 1000) - 60, // últimos 60 segundos
+        },
+      ]);
 
-    sub.on('event', async (event) => {
-      if (respondedEvents.has(event.id)) return; // já respondido
-      respondedEvents.add(event.id);
+      sub.on('event', async (event) => {
+        if (respondedEvents.has(event.id)) return; // já respondido
+        respondedEvents.add(event.id);
 
-      const cmd = parseCommand(event.content);
-      if (!cmd) return;
+        const cmd = parseCommand(event.content);
+        if (!cmd) return;
 
-      let response;
-      if (cmd.command === 'feeds') {
-        response = `📡 Available feeds:\n\n${config.feeds.map(feed => `• ${feed.name}`).join('\n')}`;
-      } else if (cmd.command === 'latest' && cmd.arg) {
-        const category = cmd.arg.trim();
-        const items = store.fetchLatestNews(category, 3);
-        if (items.length === 0) {
-          response = `❌ Sorry, I couldn’t find any news for the category "${category}".`;
+        let response;
+        if (cmd.command === 'feeds') {
+          response = `📡 Available feeds:\n\n${config.feeds.map(feed => `• ${feed.name}`).join('\n')}`;
+        } else if (cmd.command === 'latest' && cmd.arg) {
+          const category = cmd.arg.trim();
+          const items = store.fetchLatestNews(category, 3);
+          if (items.length === 0) {
+            response = `❌ Sorry, I couldn’t find any news for the category "${category}".`;
+          } else {
+            response = `📰 Latest news related to "${category}":\n` + items.map(i => `• ${i}`).join('\n');
+          }
         } else {
-          response = `📰 Latest news related to "${category}":\n` + items.map(i => `• ${i}`).join('\n');
+          response = `🤖 Oops! I didn’t understand that.\nYou can use:\n\n• !feeds — list all available feeds\n• !latest <category> — get recent posts from a category`;
         }
-      } else {
-        response = `🤖 Oops! I didn’t understand that.\nYou can use:\n\n• !feeds — list all available feeds\n• !latest <category> — get recent posts from a category`;
-      }
 
-      const replyEvent = buildReply(event, response);
-      relay.publish(replyEvent);
-      console.log(`Replied to ${event.pubkey}.`);
-    });
+        const replyEvent = buildReply(event, response);
+        relay.publish(replyEvent);
+        console.log(`Replied to ${event.pubkey}.`);
+      });
+    } catch (err) {
+      console.error(`Error connecting to relay ${relayUrl}:`, err.message || err);
+    }
   }
 }
 
-module.exports = { respondToMentions };
+module.exports = { parseCommand, respondToMentions };

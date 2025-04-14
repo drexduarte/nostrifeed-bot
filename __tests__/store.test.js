@@ -1,17 +1,4 @@
-jest.mock('fs', () => {
-  let data = { links: [] };
-
-  return {
-    __setMockData: (mockData) => {
-      data = mockData;
-    },
-    existsSync: jest.fn(() => true),
-    readFileSync: jest.fn(() => JSON.stringify(data)),
-    writeFileSync: jest.fn((_, content) => {
-      data = JSON.parse(content);
-    })
-  };
-});
+jest.mock('fs');
 
 const fs = require('fs');
 const store = require('../app/store');
@@ -53,5 +40,49 @@ describe('store.js', () => {
     store.addPublishedLink('https://b.com', 500, 'b');
     const latest = store.fetchLatestNews('', 1);
     expect(latest).toEqual(['https://b.com']);
+  });
+
+  it('truncates links if max limit is exceeded', () => {
+    const longList = Array.from({ length: 600 }, (_, i) => ({
+      url: `https://site${i}.com`,
+      category: 'overflow'
+    }));
+  
+    jest.resetModules();
+  
+    const fs = require('fs'); 
+    fs.__setMockData({ links: longList });
+
+    const store2 = require('../app/store');
+  
+    store2.addPublishedLink('https://new.com', 500, 'overflow');
+  
+    const links = store2.getPublishedLinks();
+    expect(links.length).toBeLessThanOrEqual(500);
+    expect(links.at(-1).url).toBe('https://new.com');
+  });
+
+  it('should handle when file does not exist', () => {
+    jest.resetModules();
+  
+    const fs = require('fs'); 
+    fs.existsSync.mockReturnValueOnce(false);
+  
+    const store = require('../app/store');
+    const links = store.getPublishedLinks();
+  
+    expect(links).toEqual([]);
+  });
+
+  it('should handle when file does not contain a valid list', () => {
+    jest.resetModules();
+  
+    const fs = require('fs'); 
+    fs.__setMockData({});
+  
+    const store = require('../app/store');
+    const links = store.getPublishedLinks();
+  
+    expect(links).toEqual([]);
   });
 });
