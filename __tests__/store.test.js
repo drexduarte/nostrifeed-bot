@@ -49,14 +49,11 @@ describe('store.js', () => {
     }));
   
     jest.resetModules();
-  
     const fs = require('fs'); 
     fs.__setMockData({ links: longList });
 
     const store2 = require('../app/store');
-  
     store2.addPublishedLink('https://new.com', 500, 'overflow');
-  
     const links = store2.getPublishedLinks();
     expect(links.length).toBeLessThanOrEqual(500);
     expect(links.at(-1).url).toBe('https://new.com');
@@ -64,25 +61,67 @@ describe('store.js', () => {
 
   it('should handle when file does not exist', () => {
     jest.resetModules();
-  
     const fs = require('fs'); 
     fs.existsSync.mockReturnValueOnce(false);
-  
+
     const store = require('../app/store');
     const links = store.getPublishedLinks();
-  
     expect(links).toEqual([]);
   });
 
-  it('should handle when file does not contain a valid list', () => {
+  it('should handle when file contains an invalid list (not an array)', () => {
     jest.resetModules();
-  
     const fs = require('fs'); 
-    fs.__setMockData({});
-  
+    fs.__setMockData({ links: 'invalid data' });
+
     const store = require('../app/store');
     const links = store.getPublishedLinks();
-  
+    expect(links).toEqual([]);
+  });
+
+  it('should handle when file contains an invalid list (missing links)', () => {
+    jest.resetModules();
+    const fs = require('fs'); 
+    fs.__setMockData({ someOtherKey: 'value' });
+
+    const store = require('../app/store');
+    const links = store.getPublishedLinks();
+    expect(links).toEqual([]);
+  });
+
+  it('should handle reading a valid file and loading links correctly', () => {
+    jest.resetModules();
+    const mockLinks = [
+      { url: 'https://site1.com', category: 'tech' },
+      { url: 'https://site2.com', category: 'economy' }
+    ];
+    const fs = require('fs'); 
+    fs.__setMockData({ links: mockLinks });
+
+    const store = require('../app/store');
+    const links = store.getPublishedLinks();
+    expect(links).toEqual(mockLinks);
+  });
+
+  it('should handle file read errors gracefully', () => {
+    jest.resetModules();
+    const fs = require('fs');
+    fs.readFileSync.mockImplementationOnce(() => {
+      throw new Error('File read error');
+    });
+
+    const store = require('../app/store');
+    const links = store.getPublishedLinks();
+    expect(links).toEqual([]);
+  });
+
+  it('should handle errors when JSON parsing fails', () => {
+    jest.resetModules();
+    const fs = require('fs');
+    fs.readFileSync.mockReturnValueOnce('invalid json');
+
+    const store = require('../app/store');
+    const links = store.getPublishedLinks();
     expect(links).toEqual([]);
   });
 });

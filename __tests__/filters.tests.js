@@ -46,4 +46,9 @@ describe('shouldFilterItem', () => {
     const item = { title: 'News', categories: [{ unknown: 'none' }] };
     expect(shouldFilterItem(item, filters)).toBe(false);
   });
+
+  it('handles category with any type gracefully', () => {
+    const item = { title: 'News', categories: [42] };
+    expect(shouldFilterItem(item, filters)).toBe(false);
+  });
 });

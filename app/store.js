@@ -4,11 +4,17 @@ const path = require('path');
 const PUBLISHED_FILE = path.resolve('published.json');
 let publishedLinks = [];
 
-if (fs.existsSync(PUBLISHED_FILE)) {
-  publishedLinks = JSON.parse(fs.readFileSync(PUBLISHED_FILE, 'utf-8')).links || [];
-} else {
+try{
+  if (fs.existsSync(PUBLISHED_FILE)) {
+    const data = JSON.parse(fs.readFileSync(PUBLISHED_FILE, 'utf-8'));
+    publishedLinks = Array.isArray(data.links) ? data.links : [];
+  } else {
+    publishedLinks = [];
+  }
+} catch(err){
   publishedLinks = [];
 }
+
 
 function save() {
   fs.writeFileSync(PUBLISHED_FILE, JSON.stringify({ links: publishedLinks }, null, 2));
