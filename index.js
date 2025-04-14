@@ -7,10 +7,12 @@ const { shouldFilterItem } = require('./app/filters');
 const { delay, normalizeLink } = require('./app/utils');
 const store = require('./app/store');
 const { publishToRelays } = require('./app/publisher');
+const { respondToMentions } = require('./app/responder');
 
 const parser = new Parser();
-const privateKey = process.env.NOSTR_PRIVATE_KEY;
-const pubkey = getPublicKey(privateKey);
+const BOT_PRIVKEY = process.env.NOSTR_PRIVATE_KEY;
+const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
+const BOT_PUBKEY = getPublicKey(BOT_PRIVKEY);
 
 // Dynamically reload config file on changes
 watchConfig();
@@ -24,19 +26,19 @@ async function fetchAndPublish() {
   const filters = config.filters || {};
   const publishedLinks = store.getPublishedLinks().map(entry => entry.url);
 
-  for (const feedUrl of feeds) {
+  for (const feed of feeds) {
     try {
-      const feed = await parser.parseURL(feedUrl);
-      for (const item of feed.items.slice(0, itemsPerFeed)) {
+      const feedContent = await parser.parseURL(feed.url);
+      for (const item of feedContent.items.slice(0, itemsPerFeed)) {
         const normalizedLink = normalizeLink(item.link);
 
         if (publishedLinks.includes(normalizedLink)) {
-          console.log(`🔁 Já publicada: ${item.link}`);
+          console.log(`🔁 Already published: ${item.link}`);
           continue;
         }
 
         if (shouldFilterItem(item, filters)) {
-          console.log(`⛔ Ignorada por filtro: ${item.title}`);
+          console.log(`⛔ Skipped by filter: ${item.title}`);
           continue;
         }
 
@@ -44,17 +46,17 @@ async function fetchAndPublish() {
 
 ${item.link}
 
-Source: ${feed.title} #Newstr`;
+Source: ${feedContent.title} #Newstr`;
         const unsignedEvent = {
           kind: 1,
-          pubkey,
+          pubkey: BOT_PUBKEY,
           created_at: Math.floor(Date.now() / 1000),
-          tags: [['client', 'nostrifeed-bot'], ['nip05', 'nostrifeedbot@nostrcheck.me']],
+          tags: [['client', 'nostrifeed-bot'], ['nip05', NIP05_ADDRESS]],
           content,
         };
 
         unsignedEvent.id = getEventHash(unsignedEvent);
-        unsignedEvent.sig = getSignature(unsignedEvent, privateKey);
+        unsignedEvent.sig = getSignature(unsignedEvent, BOT_PRIVKEY);
 
         await publishToRelays(unsignedEvent, relays);
 
@@ -65,20 +67,27 @@ Source: ${feed.title} #Newstr`;
             ? first
             : (first.value || first._ || '');
         }
-        store.addPublishedLink(normalizedLink, maxStoredLinks, category);
+        store.addPublishedLink(normalizedLink, maxStoredLinks, category.trim());
 
-        await delay(2000);
+        await delay(5000);
       }
     } catch (err) {
-      console.error(`Erro ao buscar feed ${feedUrl}:`, err);
+      console.error(`Error while fetching feed ${feed.url}:`, err);
     }
   }
 }
 
+respondToMentions();
+
 // Runs every minute after the previous execution finishes
 async function loop() {
-  await fetchAndPublish();
-  setTimeout(loop, 60 * 1000);
+  try {
+    await fetchAndPublish();
+  } catch (err) {
+    console.error("Error in publishing loop:", err);
+  } finally {
+    setTimeout(loop, 60 * 1000);
+  }
 }
 
 loop();

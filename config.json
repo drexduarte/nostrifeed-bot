@@ -1,11 +1,29 @@
 {
   "feeds": [
-    "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://www.coindesk.com/arc/outboundfeeds/rss/",
-    "https://cointelegraph.com/rss",
-    "https://www.cnbc.com/id/10001147/device/rss/rss.html",
-    "https://www.cnnbrasil.com.br/rss"
+    {
+      "name": "CoinDesk",
+      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
+    },
+    {
+      "name": "CoinTelegraph",
+      "url": "https://cointelegraph.com/rss"
+    },
+    {
+      "name": "CNBC",
+      "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html"
+    },
+    {
+      "name": "CNN Brasil",
+      "url": "https://www.cnnbrasil.com.br/rss"
+    },
+    {
+    "name": "NewYork Times",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
+    },
+    {
+      "name": "BBC News",
+      "url": "https://feeds.bbci.co.uk/news/rss.xml"
+    }
   ],
   "relays": [
     "wss://relay.damus.io",
@@ -16,6 +34,6 @@
   "itemsPerFeed": 2,
   "maxStoredLinks": 500,
   "filters": {
-    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes", "BBB"]
+    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes", "BBB", "Educação", "Clima"]
   }
 }
