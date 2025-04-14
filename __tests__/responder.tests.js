@@ -160,7 +160,7 @@ describe('respondToMentions', () => {
     }));
   });
 
-  it('ignores already responded events', async () => {
+  it('responds to the help command', async () => {
     let eventCallback;
     mockSubOn.mockImplementation((eventType, cb) => {
       if (eventType === 'event') eventCallback = cb;
@@ -171,8 +171,30 @@ describe('respondToMentions', () => {
     const fakeEvent = {
       id: '5',
       pubkey: 'user4',
-      content: '!feeds',
+      content: '!help',
       tags: [['p', 'user4']],
+    };
+
+    await eventCallback(fakeEvent);
+
+    expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
+      content: expect.stringContaining('🤖 I can help you with the following commands:'),
+    }));
+  });
+
+  it('ignores already responded events', async () => {
+    let eventCallback;
+    mockSubOn.mockImplementation((eventType, cb) => {
+      if (eventType === 'event') eventCallback = cb;
+    });
+
+    await respondToMentions();
+
+    const fakeEvent = {
+      id: '6',
+      pubkey: 'user5',
+      content: '!feeds',
+      tags: [['p', 'user5']],
     };
 
     await eventCallback(fakeEvent);
@@ -190,15 +212,67 @@ describe('respondToMentions', () => {
     await respondToMentions();
 
     const fakeEvent = {
-      id: '6',
-      pubkey: 'user4',
+      id: '7',
+      pubkey: 'user6',
       content: 'Hello world!',
-      tags: [['p', 'user5']],
+      tags: [['p', 'user6']],
     };
 
     await eventCallback(fakeEvent);
 
     expect(mockPublish).not.toHaveBeenCalled();
+  });
+
+  it('responds with the list of categories when mentioned with !categories', async () => {
+    store.getPublishedLinks.mockReturnValue([
+      { category: 'Tech' },
+      { category: 'Sports' },
+      { category: 'World' },
+    ]);
+
+    let eventCallback;
+    mockSubOn.mockImplementation((eventType, cb) => {
+      if (eventType === 'event') eventCallback = cb;
+    });
+
+    await respondToMentions();
+
+    const fakeEvent = {
+      id: '8',
+      pubkey: 'user7',
+      content: '!categories',
+      tags: [['p', 'user7']],
+    };
+
+    await eventCallback(fakeEvent);
+
+    expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
+      content: expect.stringContaining('📂 Recent categories:'),
+    }));
+  });
+
+  it('responds with a not found message when !categories has no results', async () => {
+    store.getPublishedLinks.mockReturnValue([]);
+
+    let eventCallback;
+    mockSubOn.mockImplementation((eventType, cb) => {
+      if (eventType === 'event') eventCallback = cb;
+    });
+
+    await respondToMentions();
+
+    const fakeEvent = {
+      id: '9',
+      pubkey: 'user8',
+      content: '!categories',
+      tags: [['p', 'user8']],
+    };
+
+    await eventCallback(fakeEvent);
+
+    expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
+      content: '❌ Sorry, I couldn’t find any categories.',
+    }));
   });
 });
 
