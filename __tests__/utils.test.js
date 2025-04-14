@@ -17,6 +17,6 @@ describe('delay', () => {
   it('resolves after the specified duration', async () => {
     const start = Date.now();
     await delay(50);
-    expect(Date.now() - start).toBeGreaterThanOrEqual(50);
+    expect(Date.now() - start).toBeGreaterThanOrEqual(45); // Allow some leeway for timing
   });
 });

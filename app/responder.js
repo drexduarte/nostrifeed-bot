@@ -68,8 +68,23 @@ async function respondToMentions() {
           } else {
             response = `📰 Latest news related to "${category}":\n` + items.map(i => `• ${i}`).join('\n');
           }
-        } else {
-          response = `🤖 Oops! I didn’t understand that.\nYou can use:\n\n• !feeds — list all available feeds\n• !latest <category> — get recent posts from a category`;
+        } 
+        else if (cmd.command === 'categories') {
+          const categories = [...new Set(store.getPublishedLinks().map(link => link.category).filter(Boolean))];
+          if (categories.length === 0) {
+            response = `❌ Sorry, I couldn’t find any categories.`;
+          } else {
+            response = `📂 Recent categories:\n` + categories.map(c => `• ${c}`).join('\n');
+          }
+        }
+        else if (cmd.command === 'help') {
+          response = `🤖 I can help you with the following commands:\n\n` +
+            `• !feeds — list all available feeds\n` +
+            `• !latest <category> — get recent posts from a category\n` +
+            `• !categories — list all recent categories (last 500 news)`;
+        }
+        else {
+          response = `🤖 Oops! I didn’t understand that.\n\nYou can use !help to check available commands.`;
         }
 
         const replyEvent = buildReply(event, response);
