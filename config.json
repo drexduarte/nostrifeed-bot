@@ -34,6 +34,6 @@
   "itemsPerFeed": 2,
   "maxStoredLinks": 500,
   "filters": {
-    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes", "BBB", "Educação", "Clima"]
+    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes", "BBB", "Educação", "Clima", "Corinthians"]
   }
 }

@@ -36,10 +36,11 @@ cd nostrifeed-bot
 npm install
 ```
 
-3. Create a `.env` file with your Nostr private key:
+3. Create a `.env` file with your Nostr private key and your NIP-05 address (check the `.env.example` file):
 
 ```env
 NOSTR_PRIVATE_KEY=your_hex_private_key_here
+NIP05_ADDRESS=your@domain.com
 ```
 
 4. Edit `config.json` to set your desired RSS feeds, relays, filters, and other preferences.
@@ -83,6 +84,26 @@ Source: Business News #Newstr
 ```
 
 ---
+
+## 📟 Commands via Nostr
+
+Once mentioned in a note, the bot supports the following commands:
+
+| Command                | Description                                  |
+|------------------------|----------------------------------------------|
+| `!feeds`               | List available feeds                         |
+| `!latest <category>`   | Show latest 3 links from a category          |
+| `!categories`          | List known categories from published items   |
+| `!help`                | Show command help                            |
+
+---
+
+## 📌 Version
+
+Current version: **1.0.0** — First stable release 🚀
+
+---
+
 ## Contributing
 
 Contributions are welcome! Feel free to fork this repo, create a new branch, and submit a pull request. If you find any bugs or have suggestions for improvements, open an issue to discuss.

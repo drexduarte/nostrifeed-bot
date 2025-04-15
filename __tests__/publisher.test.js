@@ -82,7 +82,7 @@ it('logs failure when publish rejects', async () => {
   await publishToRelays(event, ['wss://fail.test']);
   jest.runOnlyPendingTimers();
 
-  expect(consoleSpy).toHaveBeenCalledWith('❌ Falha ao publicar em wss://fail.test: rejected by relay');
+  expect(consoleSpy).toHaveBeenCalledWith('❌ Failed to publish to wss://fail.test: rejected by relay');
 
   consoleSpy.mockRestore();
 });
