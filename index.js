@@ -10,9 +10,9 @@ const { publishToRelays } = require('./app/publisher');
 const { respondToMentions } = require('./app/responder');
 
 const parser = new Parser();
-const BOT_PRIVKEY = process.env.NOSTR_PRIVATE_KEY;
+const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
 const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
-const BOT_PUBKEY = getPublicKey(BOT_PRIVKEY);
+const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
 
 // Dynamically reload config file on changes
 watchConfig();
@@ -49,14 +49,14 @@ ${item.link}
 Source: ${feedContent.title} #Newstr`;
         const unsignedEvent = {
           kind: 1,
-          pubkey: BOT_PUBKEY,
+          pubkey: BOT_PUBLICKEY,
           created_at: Math.floor(Date.now() / 1000),
           tags: [['client', 'nostrifeed-bot'], ['nip05', NIP05_ADDRESS]],
           content,
         };
 
         unsignedEvent.id = getEventHash(unsignedEvent);
-        unsignedEvent.sig = getSignature(unsignedEvent, BOT_PRIVKEY);
+        unsignedEvent.sig = getSignature(unsignedEvent, BOT_PRIVATEKEY);
 
         await publishToRelays(unsignedEvent, relays);
 

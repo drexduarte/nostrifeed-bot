@@ -7,8 +7,9 @@ const store = require('./store');
 const config = require('./config').getConfig();
 
 const RELAYS = config.relays;
-const privateKey = process.env.NOSTR_PRIVATE_KEY;
-const publicKey = getPublicKey(privateKey);
+const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
+const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
+const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
 
 const respondedEvents = new Set();
 
@@ -22,16 +23,18 @@ function parseCommand(content) {
 function buildReply(event, content) {
   const reply = {
     kind: 1,
-    pubkey: publicKey,
+    pubkey: BOT_PUBLICKEY,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
       ['e', event.id],
       ['p', event.pubkey],
+      ['client', 'nostrifeed-bot'],
+      ['nip05', NIP05_ADDRESS]
     ],
     content,
   };
   reply.id = getEventHash(reply);
-  reply.sig = getSignature(reply, privateKey);
+  reply.sig = getSignature(reply, BOT_PRIVATEKEY);
   return reply;
 }
 
@@ -45,7 +48,7 @@ async function respondToMentions() {
       const sub = relay.sub([
         {
           kinds: [1],
-          '#p': [publicKey], // menção direta via tag
+          '#p': [BOT_PUBLICKEY], // menção direta via tag
           since: Math.floor(Date.now() / 1000) - 60, // últimos 60 segundos
         },
       ]);
@@ -88,8 +91,9 @@ async function respondToMentions() {
         }
 
         const replyEvent = buildReply(event, response);
-        relay.publish(replyEvent);
-        console.log(`Replied to ${event.pubkey}.`);
+        relay.publish(replyEvent)
+          .then(() => console.log(`✅ Successfully replied to ${event.id} on ${relayUrl}`))
+          .catch(err => console.log(`❌ Failed to reply to ${event.id} on ${relayUrl}: ${err?.message || err}`)); 
       });
     } catch (err) {
       console.error(`Error connecting to relay ${relayUrl}:`, err.message || err);

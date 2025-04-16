@@ -29,11 +29,13 @@
     "wss://relay.damus.io",
     "wss://nos.lol",
     "wss://nostr-pub.wellorder.net",
-    "wss://nostr.mom"
+    "wss://nostr.mom",
+    "wss://relay.primal.net"
   ],
   "itemsPerFeed": 2,
   "maxStoredLinks": 500,
   "filters": {
-    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes", "BBB", "Educação", "Clima", "Corinthians"]
-  }
+    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes",
+    "BBB", "Educação", "Clima", "Corinthians", "Pará", "Alagoas"
+  ]}
 }

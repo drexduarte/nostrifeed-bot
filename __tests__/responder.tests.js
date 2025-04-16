@@ -19,7 +19,13 @@ describe('respondToMentions', () => {
   let mockPublish, mockSubOn, mockRelay, mockConnect;
 
   beforeEach(() => {
-    mockPublish = jest.fn();
+    mockPublish =  jest.fn(() => ({
+      then: (cb) => {
+        cb();
+        return { catch: () => {} };
+      },
+      on: jest.fn()
+    }));
     mockSubOn = jest.fn();
     mockConnect = jest.fn().mockResolvedValue();
 
@@ -64,6 +70,76 @@ describe('respondToMentions', () => {
 
     expect(errorRelay.connect).toHaveBeenCalled();
   });
+
+  it('logs an error if publish fails', async () => {
+    const error = new Error('publish failed');
+    const mockCatch = jest.fn();
+
+    // Simula publish com falha
+    mockPublish = jest.fn(() => ({
+      then: () => ({ catch: mockCatch.mockImplementation(cb => cb(error)) }),
+      on: jest.fn()
+    }));
+
+    mockRelay.publish = mockPublish;
+    relayInit.mockReturnValue(mockRelay);
+
+    let eventCallback;
+    mockSubOn.mockImplementation((eventType, cb) => {
+      if (eventType === 'event') eventCallback = cb;
+    });
+
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await respondToMentions();
+
+    const fakeEvent = {
+      id: 'fail-1',
+      pubkey: 'user9',
+      content: '!feeds',
+      tags: [['p', 'user9']],
+    };
+
+    await eventCallback(fakeEvent);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('❌ Failed to reply to fail-1 on'));
+    logSpy.mockRestore();
+  });
+
+  it('logs a string error if publish fails with a string', async () => {
+    const mockCatch = jest.fn();
+
+    // Simula publish com string como erro
+    mockPublish = jest.fn(() => ({
+      then: () => ({ catch: mockCatch.mockImplementation(cb => cb('something went wrong')) }),
+      on: jest.fn()
+    }));
+
+    mockRelay.publish = mockPublish;
+    relayInit.mockReturnValue(mockRelay);
+
+    let eventCallback;
+    mockSubOn.mockImplementation((eventType, cb) => {
+      if (eventType === 'event') eventCallback = cb;
+    });
+
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    await respondToMentions();
+
+    const fakeEvent = {
+      id: 'fail-2',
+      pubkey: 'user10',
+      content: '!feeds',
+      tags: [['p', 'user10']],
+    };
+
+    await eventCallback(fakeEvent);
+
+    expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('❌ Failed to reply to fail-2 on'));
+    logSpy.mockRestore();
+  });
+
 
   it('responds with latest news when mentioned with !latest <category>', async () => {
     store.fetchLatestNews.mockReturnValue(['news1', 'news2', 'news3']);
