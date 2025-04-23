@@ -1,9 +1,8 @@
 const { relayInit, getPublicKey, getEventHash, getSignature, nip19 } = require('nostr-tools');
-const fs = require('fs');
-const path = require('path');
 require('dotenv').config();
 
 const store = require('./store');
+const { slugify } = require('./utils');
 const config = require('./config').getConfig();
 
 const RELAYS = config.relays;
@@ -64,27 +63,33 @@ async function respondToMentions() {
         if (cmd.command === 'feeds') {
           response = `📡 Available feeds:\n\n${config.feeds.map(feed => `• ${feed.name}`).join('\n')}`;
         } else if (cmd.command === 'latest' && cmd.arg) {
-          const category = cmd.arg.trim();
-          const items = store.fetchLatestNews(category, 3);
+          const category = slugify(cmd.arg);
+          const feed = config.feeds.find(f => slugify(f.name) === category);
+          const items = store.fetchLatestNews(category, 3, feed ? true : false);
           if (items.length === 0) {
-            response = `❌ Sorry, I couldn’t find any news for the category "${category}".`;
+            response = `❌ Sorry, I couldn’t find any news for the category "${cmd.arg}".`;
           } else {
-            response = `📰 Latest news related to "${category}":\n` + items.map(i => `• ${i}`).join('\n');
+            response = `📰 Latest news related to "${cmd.arg}":\n\n` + items.map(i => `• ${i}`).join('\n');
           }
-        } 
+        }
         else if (cmd.command === 'categories') {
           const categories = [...new Set(store.getPublishedLinks().map(link => link.category).filter(Boolean))];
           if (categories.length === 0) {
             response = `❌ Sorry, I couldn’t find any categories.`;
           } else {
-            response = `📂 Recent categories:\n` + categories.map(c => `• ${c}`).join('\n');
+            response = `📂 Recent categories:\n\n` + categories.map(c => `• ${c}`).join('\n');
           }
         }
         else if (cmd.command === 'help') {
-          response = `🤖 I can help you with the following commands:\n\n` +
-            `• !feeds — list all available feeds\n` +
-            `• !latest <category> — get recent posts from a category\n` +
-            `• !categories — list all recent categories (last 500 news)`;
+          response = [
+            '🤖 Available commands:\n',
+            '• !feeds — List all RSS feeds the bot is currently following.',
+            '• !latest <feed name> — Show the latest 3 headlines from a specific feed.',
+            '   ⤷ Use the feed name exactly as shown in !feeds (spaces become dashes).',
+            '• !latest <category> — Show the latest 3 headlines from a specific category.',
+            '• !categories — List categories seen in recent posts.',
+            '• !help — Show this message.'
+          ].join('\n');
         }
         else {
           response = `🤖 Oops! I didn’t understand that.\n\nYou can use !help to check available commands.`;
@@ -96,7 +101,7 @@ async function respondToMentions() {
           .catch(err => console.log(`❌ Failed to reply to ${event.id} on ${relayUrl}: ${err?.message || err}`)); 
       });
     } catch (err) {
-      console.error(`Error connecting to relay ${relayUrl}:`, err.message || err);
+      console.error(`Error connecting to relay ${relayUrl}: ${err?.message || err}`);
     }
   }
 }

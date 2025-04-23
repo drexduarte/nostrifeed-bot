@@ -1,33 +1,30 @@
 {
-  "feeds": [
-    {
+  "botName": "NostriFeed Bot",
+  "botDescription": "📰 I sniff out the latest news from RSS feeds and drop it right into Nostr. No clickbait, just headlines!",
+  "feeds": [{
       "name": "CoinDesk",
       "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
-    },
-    {
+    }, {
       "name": "CoinTelegraph",
       "url": "https://cointelegraph.com/rss"
-    },
-    {
+    }, {
       "name": "CNBC",
       "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html"
-    },
-    {
-      "name": "CNN Brasil",
-      "url": "https://www.cnnbrasil.com.br/rss"
-    },
-    {
-    "name": "NewYork Times",
+    }, {
+      "name": "CNN Brasil: Economia",
+      "url": "https://www.cnnbrasil.com.br/economia/feed"
+    },  {
+      "name": "CNN Brasil: Política",
+      "url": "https://www.cnnbrasil.com.br/politica/feed"
+    }, {
+    "name": "New York Times",
     "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
-    },
-    {
+    }, {
       "name": "BBC News",
       "url": "https://feeds.bbci.co.uk/news/rss.xml"
-    }
-  ],
+    }],
   "relays": [
     "wss://relay.damus.io",
-    "wss://nos.lol",
     "wss://nostr-pub.wellorder.net",
     "wss://nostr.mom",
     "wss://relay.primal.net"
@@ -35,7 +32,6 @@
   "itemsPerFeed": 2,
   "maxStoredLinks": 500,
   "filters": {
-    "exclude_keywords": ["futebol", "soccer", "CNNPop", "CNN Esportes",
-    "BBB", "Educação", "Clima", "Corinthians", "Pará", "Alagoas"
-  ]}
+    "exclude_keywords": ["futebol", "soccer", "sport", "CNNPop", "CNN Esportes","BBB"]
+  }
 }

@@ -28,17 +28,19 @@ function wasPublished(link) {
   return publishedLinks.some(entry => entry.url === link);
 }
 
-function addPublishedLink(link, max = 500, category = '') {
-  publishedLinks.push({ url: link, category });
+function addPublishedLink(link, max = 500, category = '', feed = '') {
+  publishedLinks.push({ url: link, category, feed });
   if (max > 0 && publishedLinks.length > max) {
     publishedLinks = publishedLinks.slice(-max);
   }
   save();
 }
 
-function fetchLatestNews(category = '', limit = 5) {
+function fetchLatestNews(category = '', limit = 5, feed = false) {
   const filtered = category
-    ? publishedLinks.filter(entry => entry.category?.toLowerCase() === category.toLowerCase())
+    ? publishedLinks.filter(entry => feed ?
+        entry.feed?.toLowerCase() === category.toLowerCase() :
+      entry.category?.toLowerCase() === category.toLowerCase())
     : publishedLinks;
 
   return filtered.slice(-limit).reverse().map(entry => entry.url);

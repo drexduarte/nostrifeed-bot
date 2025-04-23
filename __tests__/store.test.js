@@ -13,9 +13,9 @@ describe('store.js', () => {
   });
 
   it('adds a new link with category and saves it', () => {
-    store.addPublishedLink('https://example.com', 500, 'economy');
+    store.addPublishedLink('https://example.com', 500, 'economy', 'exampleFeed');
     const links = store.getPublishedLinks();
-    expect(links).toContainEqual({ url: 'https://example.com', category: 'economy' });
+    expect(links).toContainEqual({ url: 'https://example.com', category: 'economy', feed: 'exampleFeed' });
   });
 
   it('wasPublished returns true if the link was saved', () => {
@@ -33,6 +33,14 @@ describe('store.js', () => {
     store.addPublishedLink('https://e3.com', 500, 'economy');
     const latest = store.fetchLatestNews('economy', 2);
     expect(latest).toEqual(['https://e3.com', 'https://e2.com']);
+  });
+
+  it('fetchLatestNews returns latest N links for specific feed', () => {
+    store.addPublishedLink('https://p1.com', 500, 'politics', 'politicsFeed');
+    store.addPublishedLink('https://p2.com', 500, 'politics', 'politicsFeed');
+    store.addPublishedLink('https://p3.com', 500, 'politics', 'politicsFeed');
+    const latest = store.fetchLatestNews('politicsFeed', 2, true);
+    expect(latest).toEqual(['https://p3.com', 'https://p2.com']);
   });
 
   it('fetchLatestNews returns latest N links from all categories', () => {

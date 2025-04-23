@@ -11,6 +11,7 @@ jest.mock('../app/config', () => ({
       { name: 'Tech' },
       { name: 'Sports' },
       { name: 'World' },
+      { name: 'Special Feed'}
     ],
   }),
 }));
@@ -40,8 +41,10 @@ describe('respondToMentions', () => {
   });
 
   it('handles relay connection errors gracefully', async () => {
+    const logSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     const errorRelay = {
-      connect: jest.fn().mockRejectedValue(new Error('failed to connect')),
+      connect: jest.fn().mockRejectedValue(new Error('failed to connect with Error')),
       publish: jest.fn(),
       on: jest.fn(),
       close: jest.fn()
@@ -50,14 +53,17 @@ describe('respondToMentions', () => {
     relayInit.mockReturnValue(errorRelay);
 
     await respondToMentions();
-    jest.runOnlyPendingTimers();
 
     expect(errorRelay.connect).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith('Error connecting to relay wss://mockrelay: failed to connect with Error');
+    logSpy.mockRestore();
   });
 
   it('handles relay string errors gracefully', async () => {
+    const logSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     const errorRelay = {
-      connect: jest.fn().mockRejectedValue('failed to connect'),
+      connect: jest.fn().mockRejectedValue('failed to connect with string'),
       publish: jest.fn(),
       on: jest.fn(),
       close: jest.fn()
@@ -66,9 +72,10 @@ describe('respondToMentions', () => {
     relayInit.mockReturnValue(errorRelay);
 
     await respondToMentions();
-    jest.runOnlyPendingTimers();
 
     expect(errorRelay.connect).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith('Error connecting to relay wss://mockrelay: failed to connect with string');
+    logSpy.mockRestore();
   });
 
   it('logs an error if publish fails', async () => {
@@ -161,7 +168,31 @@ describe('respondToMentions', () => {
     await eventCallback(fakeEvent);
 
     expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
-      content: expect.stringContaining('📰 Latest news related to "technology":\n• news1\n• news2\n• news3'),
+      content: expect.stringContaining('📰 Latest news related to "technology":\n\n• news1\n• news2\n• news3'),
+    }));
+  });
+
+  it('responds with latest news when mentioned with !latest <feed>', async () => {
+    store.fetchLatestNews.mockReturnValue(['special1', 'special2', 'special3']);
+
+    let eventCallback;
+    mockSubOn.mockImplementation((eventType, cb) => {
+      if (eventType === 'event') eventCallback = cb;
+    });
+
+    await respondToMentions();
+
+    const fakeEvent = {
+      id: '10',
+      pubkey: 'pubkey',
+      content: '!latest Special Feed',
+      tags: [['p', 'pubkey']],
+    };
+
+    await eventCallback(fakeEvent);
+
+    expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
+      content: expect.stringContaining('📰 Latest news related to "Special Feed":\n\n• special1\n• special2\n• special3'),
     }));
   });
 
@@ -254,7 +285,7 @@ describe('respondToMentions', () => {
     await eventCallback(fakeEvent);
 
     expect(mockPublish).toHaveBeenCalledWith(expect.objectContaining({
-      content: expect.stringContaining('🤖 I can help you with the following commands:'),
+      content: expect.stringContaining('🤖 Available commands:'),
     }));
   });
 

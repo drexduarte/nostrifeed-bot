@@ -16,3 +16,4 @@ const npub = nip19.npubEncode(pk);
 console.log('🔑 Private key (salve com segurança):', sk);
 console.log('🔑 Private key (nsec):', nsec);
 console.log('🪪 Public key:', pk);
+console.log('🪪 Public key (npub):', npub);

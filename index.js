@@ -1,10 +1,11 @@
 require('dotenv').config();
 const Parser = require('rss-parser');
+const he = require('he');
 const { getPublicKey, getEventHash, getSignature } = require('nostr-tools');
 
 const { getConfig, watchConfig } = require('./app/config');
 const { shouldFilterItem } = require('./app/filters');
-const { delay, normalizeLink } = require('./app/utils');
+const { delay, normalizeLink, slugify } = require('./app/utils');
 const store = require('./app/store');
 const { publishToRelays } = require('./app/publisher');
 const { respondToMentions } = require('./app/responder');
@@ -42,11 +43,10 @@ async function fetchAndPublish() {
           continue;
         }
 
-        const content = `🗞️ ${item.title}
+        const content = [`🗞️ ${he.decode(item.title)}`,
+          `${item.link}`,
+          `Source: ${feed.name} #Newstr`].join('\n\n');
 
-${item.link}
-
-Source: ${feedContent.title} #Newstr`;
         const unsignedEvent = {
           kind: 1,
           pubkey: BOT_PUBLICKEY,
@@ -67,7 +67,7 @@ Source: ${feedContent.title} #Newstr`;
             ? first
             : (first.value || first._ || '');
         }
-        store.addPublishedLink(normalizedLink, maxStoredLinks, category.trim());
+        store.addPublishedLink(normalizedLink, maxStoredLinks, category.trim(), slugify(feed.name));
 
         await delay(5000);
       }
