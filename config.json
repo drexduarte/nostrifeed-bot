@@ -11,18 +11,25 @@
       "name": "CNBC",
       "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html"
     }, {
-      "name": "CNN Brasil: Economia",
-      "url": "https://www.cnnbrasil.com.br/economia/feed"
+      "name": "CNN Brasil",
+      "url": "https://www.cnnbrasil.com.br/feed"
     },  {
-      "name": "CNN Brasil: Política",
-      "url": "https://www.cnnbrasil.com.br/politica/feed"
-    }, {
     "name": "New York Times",
     "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
     }, {
       "name": "BBC News",
       "url": "https://feeds.bbci.co.uk/news/rss.xml"
-    }],
+    }, {
+      "name": "Bitcoin Magazine",
+      "url": "https://bitcoinmagazine.com/feed"
+    }, {
+      "name": "Decrypt",
+      "url": "https://decrypt.co/feed"
+    }, {
+      "name": "Portal do Bitcoin",
+      "url": "https://portaldobitcoin.uol.com.br/feed/"
+    }
+    ],
   "relays": [
     "wss://relay.damus.io",
     "wss://nostr-pub.wellorder.net",
@@ -32,6 +39,6 @@
   "itemsPerFeed": 2,
   "maxStoredLinks": 500,
   "filters": {
-    "exclude_keywords": ["futebol", "soccer", "sport", "CNNPop", "CNN Esportes","BBB"]
+    "exclude_keywords": ["futebol", "soccer", "sport", "CNNPop", "CNN Esportes","BBB", "Games"]
   }
 }

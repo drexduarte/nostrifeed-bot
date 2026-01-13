@@ -1,12 +1,11 @@
 const { getPublicKey, getEventHash, getSignature, relayInit, nip19 } = require('nostr-tools');
 const fetch = require('node-fetch');
+const { getConfig } = require('./config');
 require('dotenv').config();
 
 const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
 const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
 const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
-
-const config = require('./config').getConfig();
 
 async function isNip05Verified(nip05, pubkey) {
   try {
@@ -25,6 +24,7 @@ async function isNip05Verified(nip05, pubkey) {
 }
 
 async function publishProfile() {
+  const config = getConfig();
   if (await isNip05Verified(NIP05_ADDRESS, BOT_PUBLICKEY)) {
     console.log('✅ NIP-05 verification successful.');
 

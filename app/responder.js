@@ -1,11 +1,10 @@
 const { relayInit, getPublicKey, getEventHash, getSignature, nip19 } = require('nostr-tools');
+const { getConfig } = require('./config');
 require('dotenv').config();
 
 const store = require('./store');
 const { slugify } = require('./utils');
-const config = require('./config').getConfig();
 
-const RELAYS = config.relays;
 const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
 const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
 const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
@@ -38,7 +37,9 @@ function buildReply(event, content) {
 }
 
 async function respondToMentions() {
-  for (const relayUrl of RELAYS) {
+  const config = getConfig();
+  const relays = config.relays;
+  for (const relayUrl of relays) {
     const relay = relayInit(relayUrl);
 
     try {
@@ -54,7 +55,6 @@ async function respondToMentions() {
 
       sub.on('event', async (event) => {
         if (respondedEvents.has(event.id)) return; // já respondido
-        respondedEvents.add(event.id);
 
         const cmd = parseCommand(event.content);
         if (!cmd) return;
@@ -98,7 +98,9 @@ async function respondToMentions() {
         const replyEvent = buildReply(event, response);
         relay.publish(replyEvent)
           .then(() => console.log(`✅ Successfully replied to ${event.id} on ${relayUrl}`))
-          .catch(err => console.log(`❌ Failed to reply to ${event.id} on ${relayUrl}: ${err?.message || err}`)); 
+          .catch(err => console.log(`❌ Failed to reply to ${event.id} on ${relayUrl}: ${err?.message || err}`));
+        
+        respondedEvents.add(event.id);
       });
     } catch (err) {
       console.error(`Error connecting to relay ${relayUrl}: ${err?.message || err}`);

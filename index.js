@@ -10,7 +10,14 @@ const store = require('./app/store');
 const { publishToRelays } = require('./app/publisher');
 const { respondToMentions } = require('./app/responder');
 
-const parser = new Parser();
+const parser = new Parser({
+  requestOptions: {
+    headers: {
+      'User-Agent': 'NostriFeedBot/1.0 (+https://github.com/drexduarte/nostrifeed-bot)',
+      'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8'
+    }
+  }
+});
 const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
 const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
 const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
