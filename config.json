@@ -1,47 +1,134 @@
 {
   "botName": "NostriFeed Bot",
-  "botDescription": "📰 I sniff out the latest news from RSS feeds and drop it right into Nostr. No clickbait, just headlines!",
-  "feeds": [{
+  "botDescription": "📰 I sniff out the latest news from RSS feeds and drop it right into Nostr. No clickbait, just headlines!",
+  
+  "feeds": [
+    {
       "name": "CoinDesk",
-      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
-    }, {
+      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+      "enabled": true,
+      "priority": 1
+    },
+    {
       "name": "CNBC",
-      "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html"
-    }, {
+      "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html",
+      "enabled": true,
+      "priority": 2
+    },
+    {
       "name": "CNN Brasil",
-      "url": "https://www.cnnbrasil.com.br/feed"
-    },  {
-    "name": "New York Times",
-    "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml"
-    }, {
+      "url": "https://www.cnnbrasil.com.br/feed",
+      "enabled": true,
+      "priority": 2
+    },
+    {
+      "name": "New York Times",
+      "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
+      "enabled": true,
+      "priority": 1
+    },
+    {
       "name": "BBC News",
-      "url": "https://feeds.bbci.co.uk/news/rss.xml"
-    }, {
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "enabled": true,
+      "priority": 1
+    },
+    {
       "name": "Bitcoin Magazine",
-      "url": "https://bitcoinmagazine.com/feed"
-    }, {
+      "url": "https://bitcoinmagazine.com/feed",
+      "enabled": true,
+      "priority": 1
+    },
+    {
       "name": "Decrypt",
-      "url": "https://decrypt.co/feed"
-    }, {
+      "url": "https://decrypt.co/feed",
+      "enabled": true,
+      "priority": 2
+    },
+    {
       "name": "Portal do Bitcoin",
-      "url": "https://portaldobitcoin.uol.com.br/feed/"
-    }, {
+      "url": "https://portaldobitcoin.uol.com.br/feed/",
+      "enabled": true,
+      "priority": 2
+    },
+    {
       "name": "Hacker News",
-      "url": "https://news.ycombinator.com/rss"
-    },{
+      "url": "https://news.ycombinator.com/rss",
+      "enabled": true,
+      "priority": 1
+    },
+    {
       "name": "Ars Technica",
-      "url": "https://feeds.arstechnica.com/arstechnica/index"
+      "url": "https://feeds.arstechnica.com/arstechnica/index",
+      "enabled": true,
+      "priority": 2
     }
-    ],
+  ],
+  
   "relays": [
     "wss://relay.damus.io",
     "wss://nostr-pub.wellorder.net",
     "wss://nostr.mom",
-    "wss://relay.primal.net"
+    "wss://relay.primal.net",
+    "wss://nos.lol"
   ],
+  
   "itemsPerFeed": 2,
-  "maxStoredLinks": 500,
+  "maxStoredLinks": 1000,
+  "publishInterval": 60,
+  
   "filters": {
-    "exclude_keywords": ["futebol", "soccer", "sport", "CNNPop", "CNN Esportes","BBB", "Games"]
+    "exclude_keywords": [
+      "futebol",
+      "soccer", 
+      "sport",
+      "CNNPop",
+      "CNN Esportes",
+      "BBB",
+      "reality show",
+      "celebridade"
+    ],
+    "include_keywords": [],
+    "exclude_categories": [
+      "entertainment",
+      "sports",
+      "celebrity"
+    ],
+    "include_categories": [],
+    "exclude_domains": [
+      "spam-site.com"
+    ],
+    "min_title_length": 15,
+    "max_title_length": 300,
+    "date_filter": {
+      "max_age_hours": 48
+    }
+  },
+  
+  "rateLimit": {
+    "delayBetweenPosts": 5000,
+    "delayBetweenFeeds": 2000,
+    "maxPostsPerCycle": 20
+  },
+  
+  "features": {
+    "respondToMentions": true,
+    "autoReconnect": true,
+    "healthCheck": true,
+    "analytics": true
+  },
+  
+  "contentFormat": {
+    "includeEmoji": true,
+    "includeFeedName": true,
+    "includeHashtags": true,
+    "maxContentLength": 500
+  },
+  
+  "monitoring": {
+    "logLevel": "info",
+    "enableMetrics": true,
+    "alertOnErrors": false,
+    "webhookUrl": ""
   }
 }
