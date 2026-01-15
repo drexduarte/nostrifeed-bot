@@ -50,9 +50,18 @@ async function fetchAndPublish() {
           continue;
         }
 
-        const content = [`🗞️ ${he.decode(item.title)}`,
+        let category = '';
+        if (item.categories && item.categories.length > 0) {
+          const first = item.categories[0];
+          category = typeof first === 'string'
+            ? first
+            : (first.value || first._ || '');
+        }
+
+        const content = [`📰 ${feed.name}`,
+          `${he.decode(item.title)}`,
           `${item.link}`,
-          `Source: ${feed.name} #Newstr`].join('\n\n');
+          `#News` + (category ? ` #${category}` : '')].join('\n\n');
 
         const unsignedEvent = {
           kind: 1,
@@ -66,14 +75,7 @@ async function fetchAndPublish() {
         unsignedEvent.sig = getSignature(unsignedEvent, BOT_PRIVATEKEY);
 
         await publishToRelays(unsignedEvent, relays);
-
-        let category = '';
-        if (item.categories && item.categories.length > 0) {
-          const first = item.categories[0];
-          category = typeof first === 'string'
-            ? first
-            : (first.value || first._ || '');
-        }
+      
         store.addPublishedLink(normalizedLink, maxStoredLinks, category.trim(), slugify(feed.name));
 
         await delay(5000);

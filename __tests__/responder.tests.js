@@ -104,7 +104,7 @@ describe('respondToMentions', () => {
       id: 'fail-1',
       pubkey: 'user9',
       content: '!feeds',
-      tags: [['p', 'user9']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -138,7 +138,7 @@ describe('respondToMentions', () => {
       id: 'fail-2',
       pubkey: 'user10',
       content: '!feeds',
-      tags: [['p', 'user10']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -162,7 +162,7 @@ describe('respondToMentions', () => {
       id: '1',
       pubkey: 'pubkey',
       content: '!latest technology',
-      tags: [['p', 'pubkey']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -186,7 +186,7 @@ describe('respondToMentions', () => {
       id: '10',
       pubkey: 'pubkey',
       content: '!latest Special Feed',
-      tags: [['p', 'pubkey']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -210,7 +210,7 @@ describe('respondToMentions', () => {
       id: '2',
       pubkey: 'user1',
       content: '!latest unknown',
-      tags: [['p', 'user1']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -232,7 +232,7 @@ describe('respondToMentions', () => {
       id: '3',
       pubkey: 'user2',
       content: '!feeds',
-      tags: [['p', 'user2']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -257,7 +257,7 @@ describe('respondToMentions', () => {
       id: '4',
       pubkey: 'user3',
       content: '!unknowncommand',
-      tags: [['p', 'user3']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -279,7 +279,7 @@ describe('respondToMentions', () => {
       id: '5',
       pubkey: 'user4',
       content: '!help',
-      tags: [['p', 'user4']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -301,7 +301,7 @@ describe('respondToMentions', () => {
       id: '6',
       pubkey: 'user5',
       content: '!feeds',
-      tags: [['p', 'user5']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -322,7 +322,7 @@ describe('respondToMentions', () => {
       id: '7',
       pubkey: 'user6',
       content: 'Hello world!',
-      tags: [['p', 'user6']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -348,7 +348,7 @@ describe('respondToMentions', () => {
       id: '8',
       pubkey: 'user7',
       content: '!categories',
-      tags: [['p', 'user7']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);
@@ -372,7 +372,7 @@ describe('respondToMentions', () => {
       id: '9',
       pubkey: 'user8',
       content: '!categories',
-      tags: [['p', 'user8']],
+      tags: [['p', 'BOT_PUBKEY']],
     };
 
     await eventCallback(fakeEvent);

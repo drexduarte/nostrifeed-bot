@@ -1,4 +1,4 @@
-const { relayInit, getPublicKey, getEventHash, getSignature, nip19 } = require('nostr-tools');
+const { relayInit, getPublicKey, getEventHash, getSignature } = require('nostr-tools');
 const { getConfig } = require('./config');
 require('dotenv').config();
 
@@ -9,13 +9,24 @@ const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
 const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
 const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
 
-const respondedEvents = new Set();
-
 function parseCommand(content) {
   const contentWithoutMentions = content.replace(/(^|\s)(nostr:)?npub[0-9a-zA-Z]+/g, '').trim();
   const match = contentWithoutMentions.match(/^!(\w+)(?:\s+(.+))?/);
   if (!match) return null;
   return { command: match[1], arg: match[2] };
+}
+
+function getThreadTags(event) {
+  const eTags = event.tags.filter(t => t[0] === 'e');
+  if (eTags.length === 0) {
+    return [['e', event.id, '', 'root']];
+  }
+  const root = eTags.find(t => t[3] === 'root') || eTags[0];
+  const reply = eTags.find(t => t[3] === 'reply') || eTags[eTags.length - 1];
+  return [
+    ['e', root[1], '', 'root'],
+    ['e', reply[1], '', 'reply'],
+  ];
 }
 
 function buildReply(event, content) {
@@ -24,7 +35,7 @@ function buildReply(event, content) {
     pubkey: BOT_PUBLICKEY,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
-      ['e', event.id],
+      ...getThreadTags(event),
       ['p', event.pubkey],
       ['client', 'nostrifeed-bot'],
       ['nip05', NIP05_ADDRESS]
@@ -49,13 +60,13 @@ async function respondToMentions() {
         {
           kinds: [1],
           '#p': [BOT_PUBLICKEY], // menção direta via tag
-          since: Math.floor(Date.now() / 1000) - 60, // últimos 60 segundos
+          since: Math.floor(Date.now() / 1000) - 3600, // última hora antes do bot iniciar
         },
       ]);
 
       sub.on('event', async (event) => {
-        if (respondedEvents.has(event.id)) return; // já respondido
-
+        if (store.wasResponded(event.id) || event.pubkey === BOT_PUBLICKEY) return; // já respondido ou é o próprio bot
+        
         const cmd = parseCommand(event.content);
         if (!cmd) return;
 
@@ -97,10 +108,11 @@ async function respondToMentions() {
 
         const replyEvent = buildReply(event, response);
         relay.publish(replyEvent)
-          .then(() => console.log(`✅ Successfully replied to ${event.id} on ${relayUrl}`))
+          .then(() => {
+            console.log(`✅ Successfully replied to ${event.id} on ${relayUrl}`)
+            store.addRespondedEvent(event.id);
+          })
           .catch(err => console.log(`❌ Failed to reply to ${event.id} on ${relayUrl}: ${err?.message || err}`));
-        
-        respondedEvents.add(event.id);
       });
     } catch (err) {
       console.error(`Error connecting to relay ${relayUrl}: ${err?.message || err}`);
