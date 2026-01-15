@@ -1,123 +1,278 @@
-const { relayInit, getPublicKey, getEventHash, getSignature } = require('nostr-tools');
+const { getEventHash, getSignature } = require('nostr-tools');
 const { getConfig } = require('./config');
-require('dotenv').config();
-
 const store = require('./store');
-const { slugify } = require('./utils');
+const { slugify, formatTimestamp } = require('./utils');
 
-const BOT_PRIVATEKEY = process.env.NOSTR_PRIVATE_KEY;
-const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
-const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
+const COMMAND_PREFIX = '!';
+const subscriptions = new Map();
+const processingEvents = new Set();
 
 function parseCommand(content) {
-  const contentWithoutMentions = content.replace(/(^|\s)(nostr:)?npub[0-9a-zA-Z]+/g, '').trim();
+  const contentWithoutMentions = content
+    .replace(/(^|\s)(nostr:)?npub[0-9a-zA-Z]+/g, '')
+    .trim();
+  
   const match = contentWithoutMentions.match(/^!(\w+)(?:\s+(.+))?/);
   if (!match) return null;
-  return { command: match[1], arg: match[2] };
+  
+  return {
+    command: match[1].toLowerCase(),
+    arg: match[2]?.trim()
+  };
 }
 
-function getThreadTags(event) {
+function getThreadTags(event, relayUrl) {
   const eTags = event.tags.filter(t => t[0] === 'e');
+  const pTags = event.tags.filter(t => t[0] === 'p');
+  
+  let resultTags = [];
+  let rootEventId = null;
+  let rootAuthor = null;
+  
   if (eTags.length === 0) {
-    return [['e', event.id, '', 'root']];
+    rootEventId = event.id;
+    rootAuthor = event.pubkey;
+    resultTags.push(['e', event.id, relayUrl || '', 'root']);
+  } else {
+    const rootTag = eTags.find(t => t[3] === 'root');
+    
+    if (rootTag) {
+      rootEventId = rootTag[1];
+      resultTags.push(['e', rootEventId, rootTag[2] || '', 'root']);
+    } else {
+      rootEventId = eTags[0][1];
+      resultTags.push(['e', rootEventId, eTags[0][2] || '', 'root']);
+    }
+    
+    resultTags.push(['e', event.id, relayUrl || '', 'reply']);
+
+    if (pTags.length > 0) {
+      rootAuthor = pTags[0][1];
+    }
   }
-  const root = eTags.find(t => t[3] === 'root') || eTags[0];
-  const reply = eTags.find(t => t[3] === 'reply') || eTags[eTags.length - 1];
-  return [
-    ['e', root[1], '', 'root'],
-    ['e', reply[1], '', 'reply'],
-  ];
+  
+  const orderedPubkeys = [];
+  const seenPubkeys = new Set();
+  
+  if (rootAuthor && !seenPubkeys.has(rootAuthor)) {
+    orderedPubkeys.push(rootAuthor);
+    seenPubkeys.add(rootAuthor);
+  }
+  
+  pTags.forEach(tag => {
+    const pubkey = tag[1];
+    if (pubkey && !seenPubkeys.has(pubkey)) {
+      orderedPubkeys.push(pubkey);
+      seenPubkeys.add(pubkey);
+    }
+  });
+  
+  if (event.pubkey && !seenPubkeys.has(event.pubkey)) {
+    orderedPubkeys.push(event.pubkey);
+    seenPubkeys.add(event.pubkey);
+  }
+  
+  orderedPubkeys.forEach(pubkey => {
+    resultTags.push(['p', pubkey]);
+  });
+  
+  return resultTags;
 }
 
-function buildReply(event, content) {
+function buildReply(event, content, botPubkey, botPrivkey, nip05, relayUrl) {
   const reply = {
     kind: 1,
-    pubkey: BOT_PUBLICKEY,
+    pubkey: botPubkey,
     created_at: Math.floor(Date.now() / 1000),
     tags: [
-      ...getThreadTags(event),
-      ['p', event.pubkey],
+      ...getThreadTags(event, relayUrl),
       ['client', 'nostrifeed-bot'],
-      ['nip05', NIP05_ADDRESS]
+      ['nip05', nip05]
     ],
     content,
   };
+  
   reply.id = getEventHash(reply);
-  reply.sig = getSignature(reply, BOT_PRIVATEKEY);
+  reply.sig = getSignature(reply, botPrivkey);
+  
   return reply;
 }
 
-async function respondToMentions() {
+const commands = {
+  feeds: () => {
+    const config = getConfig();
+    const feedList = config.feeds
+      .map(feed => `• ${feed.name}`)
+      .join('\n');
+    
+    return `📡 Available feeds (${config.feeds.length}):\n\n${feedList}`;
+  },
+
+  latest: (arg) => {
+    if (!arg) {
+      return '❌ Please specify a feed name or category.\nExample: !latest bitcoin-magazine';
+    }
+
+    const config = getConfig();
+    const category = slugify(arg);
+    const feed = config.feeds.find(f => slugify(f.name) === category);
+    const items = store.fetchLatestNews(category, 3, feed ? true : false);
+    
+    if (items.length === 0) {
+      return `❌ No news found for "${arg}".\n\nTry !feeds to see available sources.`;
+    }
+    
+    return `📰 Latest news from "${arg}":\n\n${items.join('\n\n')}`;
+  },
+
+  categories: () => {
+    const categories = store.getCategories();
+    
+    if (categories.length === 0) {
+      return '❌ No categories found yet.';
+    }
+    
+    return `📂 Available categories (${categories.length}):\n\n${categories.map(c => `• #${c}`).join('\n')}`;
+  },
+
+  stats: () => {
+    const stats = store.getStats();
+    const feedStats = store.getFeedStats();
+    const topFeeds = Object.entries(feedStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([feed, count]) => `• ${feed}: ${count}`)
+      .join('\n');
+
+    return [
+      '📊 Bot Statistics:\n',
+      `• Total published: ${stats.totalPublished}`,
+      `• Total responses: ${stats.totalResponded}`,
+      `• Stored items: ${stats.totalStored}`,
+      `• Last run: ${stats.lastRun ? formatTimestamp(stats.lastRun) : 'Never'}`,
+      topFeeds ? `\n🏆 Top Feeds:\n${topFeeds}` : ''
+    ].join('\n');
+  },
+
+  help: () => {
+    return [
+      '🤖 NostriFeed Bot Commands:\n',
+      '• !feeds — List all RSS feeds I follow',
+      '• !latest <name> — Show latest 3 items from a feed or category',
+      '  Example: !latest coindesk',
+      '• !categories — List all available categories',
+      '• !stats — Show bot statistics',
+      '• !help — Show this message',
+      '\n💡 Mention me with a command to interact!'
+    ].join('\n');
+  }
+};
+
+async function handleCommand(event, botPubkey, botPrivkey, nip05, relayManager, relayUrl) {
+  if (event.pubkey === botPubkey || store.wasResponded(event.id)) {
+    return;
+  }
+
+  const cmd = parseCommand(event.content);
+  if (!cmd) return;
+
+  console.log(`📨 Command received: !${cmd.command} from ${event.pubkey.slice(0, 8)}...`);
+
+  let response;
+  
+  if (commands[cmd.command]) {
+    try {
+      response = commands[cmd.command](cmd.arg);
+    } catch (err) {
+      console.error(`❌ Error executing command ${cmd.command}:`, err);
+      response = '❌ Sorry, something went wrong processing your command.';
+    }
+  } else {
+    response = `❌ Unknown command: !${cmd.command}\n\nUse !help to see available commands.`;
+  }
+
+  const replyEvent = buildReply(event, response, botPubkey, botPrivkey, nip05, relayUrl);
+  
+  try {
+    const results = await relayManager.publish(replyEvent);
+    const successCount = results.filter(r => r.success).length;
+    
+    if (successCount > 0) {
+      store.addRespondedEvent(event.id);
+      console.log(`✅ Replied to ${event.id.slice(0, 8)}... on ${successCount} relays`);
+    } else {
+      console.error(`❌ Failed to send reply to ${event.id.slice(0, 8)}...`);
+    }
+  } catch (err) {
+    console.error('❌ Error publishing reply:', err);
+  }
+}
+
+function respondToMentions(relayManager, botPubkey, botPrivkey, nip05) {
+  console.log('👂 Listening for mentions...\n');
+  
   const config = getConfig();
-  const relays = config.relays;
-  for (const relayUrl of relays) {
-    const relay = relayInit(relayUrl);
+  
+  for (const relayUrl of config.relays) {
+    const relay = relayManager.getRelay(relayUrl);
+    if (!relay) continue;
 
     try {
-      await relay.connect();
-
       const sub = relay.sub([
         {
           kinds: [1],
-          '#p': [BOT_PUBLICKEY], // menção direta via tag
-          since: Math.floor(Date.now() / 1000) - 3600, // última hora antes do bot iniciar
-        },
+          '#p': [botPubkey],
+          since: Math.floor(Date.now() / 1000)
+        }
       ]);
 
+      subscriptions.set(relayUrl, sub);
+
       sub.on('event', async (event) => {
-        if (store.wasResponded(event.id) || event.pubkey === BOT_PUBLICKEY) return; // já respondido ou é o próprio bot
+        if (processingEvents.has(event.id)) {
+          console.log(`⏭️  Skipping duplicate event ${event.id.slice(0, 8)}...`);
+          return;
+        }
         
-        const cmd = parseCommand(event.content);
-        if (!cmd) return;
-
-        let response;
-        if (cmd.command === 'feeds') {
-          response = `📡 Available feeds:\n\n${config.feeds.map(feed => `• ${feed.name}`).join('\n')}`;
-        } else if (cmd.command === 'latest' && cmd.arg) {
-          const category = slugify(cmd.arg);
-          const feed = config.feeds.find(f => slugify(f.name) === category);
-          const items = store.fetchLatestNews(category, 3, feed ? true : false);
-          if (items.length === 0) {
-            response = `❌ Sorry, I couldn’t find any news for the category "${cmd.arg}".`;
-          } else {
-            response = `📰 Latest news related to "${cmd.arg}":\n\n` + items.map(i => `• ${i}`).join('\n');
-          }
+        processingEvents.add(event.id);
+        
+        try {
+          await handleCommand(event, botPubkey, botPrivkey, nip05, relayManager, relayUrl);
+        } catch (err) {
+          console.error(`❌ Error handling event ${event.id.slice(0, 8)}:`, err);
+        } finally {
+          setTimeout(() => {
+            processingEvents.delete(event.id);
+          }, 10000);
         }
-        else if (cmd.command === 'categories') {
-          const categories = [...new Set(store.getPublishedLinks().map(link => link.category).filter(Boolean))];
-          if (categories.length === 0) {
-            response = `❌ Sorry, I couldn’t find any categories.`;
-          } else {
-            response = `📂 Recent categories:\n\n` + categories.map(c => `• ${c}`).join('\n');
-          }
-        }
-        else if (cmd.command === 'help') {
-          response = [
-            '🤖 Available commands:\n',
-            '• !feeds — List all RSS feeds the bot is currently following.',
-            '• !latest <feed name> — Show the latest 3 headlines from a specific feed.',
-            '   ⤷ Use the feed name exactly as shown in !feeds (spaces become dashes).',
-            '• !latest <category> — Show the latest 3 headlines from a specific category.',
-            '• !categories — List categories seen in recent posts.',
-            '• !help — Show this message.'
-          ].join('\n');
-        }
-        else {
-          response = `🤖 Oops! I didn’t understand that.\n\nYou can use !help to check available commands.`;
-        }
-
-        const replyEvent = buildReply(event, response);
-        relay.publish(replyEvent)
-          .then(() => {
-            console.log(`✅ Successfully replied to ${event.id} on ${relayUrl}`)
-            store.addRespondedEvent(event.id);
-          })
-          .catch(err => console.log(`❌ Failed to reply to ${event.id} on ${relayUrl}: ${err?.message || err}`));
       });
+
+      sub.on('eose', () => {
+        console.log(`✅ Subscribed to mentions on ${relayUrl}`);
+      });
+
     } catch (err) {
-      console.error(`Error connecting to relay ${relayUrl}: ${err?.message || err}`);
+      console.error(`❌ Error subscribing to ${relayUrl}:`, err.message);
     }
   }
 }
 
-module.exports = { parseCommand, respondToMentions };
+function closeAllSubscriptions() {
+  for (const [url, sub] of subscriptions) {
+    try {
+      sub.unsub();
+      console.log(`🔌 Unsubscribed from ${url}`);
+    } catch (err) {
+      console.error(`Error unsubscribing from ${url}:`, err.message);
+    }
+  }
+  subscriptions.clear();
+  processingEvents.clear();
+}
+
+module.exports = {
+  parseCommand,
+  respondToMentions,
+  closeAllSubscriptions,
+  commands
+};
