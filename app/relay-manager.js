@@ -11,18 +11,28 @@ class RelayManager {
   }
 
   async connect(url) {
+    let conn;
     if (this.connections.has(url)) {
-      const conn = this.connections.get(url);
+      conn = this.connections.get(url);
       if (conn.status === 'connected') return conn.relay;
+      conn.status = 'connecting';
+    }
+   
+    if(!conn){
+      conn = { status: 'connecting', retries: 0, reconnectTimer: null };
+      this.connections.set(url, conn);
     }
 
     const relay = relayInit(url);
-    const conn = { relay, status: 'connecting', retries: 0 };
-      this.connections.set(url, conn);
+    conn.relay = relay;
 
     relay.on('connect', () => {
       conn.status = 'connected';
       conn.retries = 0;
+      if (conn.reconnectTimer) {
+        clearTimeout(conn.reconnectTimer);
+        conn.reconnectTimer = null;
+      }
       console.log(`✅ Connected to ${url}`);
     });
 
@@ -52,8 +62,6 @@ class RelayManager {
       return relay;
     } catch (err) {
       console.error(`Failed to connect to ${url}:`, err.message);
-      conn.status = 'error';
-      this.scheduleReconnect(url);
       throw err;
     }
   }
@@ -65,9 +73,15 @@ class RelayManager {
       return;
     }
 
+    if (conn.reconnectTimer){
+      console.log(`⏳ Reconnect to ${url} already scheduled`);
+      return;
+    }
+
     conn.retries++;
-    setTimeout(() => {
+    conn.reconnectTimer = setTimeout(() => {
       console.log(`🔄 Reconnecting to ${url} (attempt ${conn.retries}/${this.maxRetries})`);
+      conn.reconnectTimer = null;
       this.connect(url).catch(() => {});
     }, this.reconnectDelay * conn.retries);
   }
