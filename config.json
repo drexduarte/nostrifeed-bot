@@ -6,65 +6,55 @@
     {
       "name": "CoinDesk",
       "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
-      "enabled": true,
-      "priority": 1
+      "enabled": true
     },
     {
       "name": "CNBC",
       "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html",
-      "enabled": true,
-      "priority": 2
+      "enabled": true
     },
     {
       "name": "CNN Brasil",
       "url": "https://www.cnnbrasil.com.br/feed",
-      "enabled": true,
-      "priority": 2
+      "enabled": true
     },
     {
       "name": "New York Times",
       "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-      "enabled": true,
-      "priority": 1
+      "enabled": true
     },
     {
       "name": "BBC News",
       "url": "https://feeds.bbci.co.uk/news/rss.xml",
-      "enabled": true,
-      "priority": 1
+      "enabled": true
     },
     {
       "name": "Bitcoin Magazine",
       "url": "https://bitcoinmagazine.com/feed",
-      "enabled": true,
-      "priority": 1
+      "enabled": true
     },
     {
       "name": "Decrypt",
       "url": "https://decrypt.co/feed",
-      "enabled": true,
-      "priority": 2
+      "enabled": true
     },
     {
       "name": "Portal do Bitcoin",
       "url": "https://portaldobitcoin.uol.com.br/feed/",
-      "enabled": true,
-      "priority": 2
+      "enabled": true
     },
     {
       "name": "Hacker News",
       "url": "https://news.ycombinator.com/rss",
-      "enabled": true,
-      "priority": 1
+      "enabled": true
     },
     {
       "name": "Ars Technica",
       "url": "https://feeds.arstechnica.com/arstechnica/index",
-      "enabled": true,
-      "priority": 2
+      "enabled": true
     }
   ],
-  
+
   "relays": [
     "wss://relay.damus.io",
     "wss://nostr-pub.wellorder.net",
@@ -72,15 +62,22 @@
     "wss://relay.primal.net",
     "wss://nos.lol"
   ],
-  
+
+  "relayOptions": {
+    "maxRetries": 3,
+    "reconnectDelay": 5000,
+    "timeout": 10000,
+    "publishTimeout": 5000
+  },
+
   "itemsPerFeed": 2,
   "maxStoredLinks": 1000,
   "publishInterval": 60,
-  
+
   "filters": {
     "exclude_keywords": [
       "futebol",
-      "soccer", 
+      "soccer",
       "sport",
       "CNNPop",
       "CNN Esportes",
@@ -104,31 +101,9 @@
       "max_age_hours": 48
     }
   },
-  
+
   "rateLimit": {
     "delayBetweenPosts": 5000,
-    "delayBetweenFeeds": 2000,
-    "maxPostsPerCycle": 20
-  },
-  
-  "features": {
-    "respondToMentions": true,
-    "autoReconnect": true,
-    "healthCheck": true,
-    "analytics": true
-  },
-  
-  "contentFormat": {
-    "includeEmoji": true,
-    "includeFeedName": true,
-    "includeHashtags": true,
-    "maxContentLength": 500
-  },
-  
-  "monitoring": {
-    "logLevel": "info",
-    "enableMetrics": true,
-    "alertOnErrors": false,
-    "webhookUrl": ""
+    "delayBetweenFeeds": 2000
   }
 }

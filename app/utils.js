@@ -44,8 +44,8 @@ function generateContentHash(title, link) {
   return crypto.createHash('sha256').update(content).digest('hex').slice(0, 16);
 }
 
-function slugify(text) {
-  return text
+function slugify(text, options = {}) {
+  let slug = text
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -53,6 +53,12 @@ function slugify(text) {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
+
+  if (options.hashtagFriendly) {
+    slug = slug.replace(/-/g, '');
+  }
+
+  return slug;
 }
 
 /**

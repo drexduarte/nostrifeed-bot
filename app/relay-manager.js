@@ -7,6 +7,7 @@ class RelayManager {
     this.reconnectDelay = options.reconnectDelay || 5000;
     this.maxRetries = options.maxRetries || 3;
     this.timeout = options.timeout || 10000;
+    this.publishTimeout = options.publishTimeout || 5000;
   }
 
   async connect(url) {
@@ -17,7 +18,7 @@ class RelayManager {
 
     const relay = relayInit(url);
     const conn = { relay, status: 'connecting', retries: 0 };
-    this.connections.set(url, conn);
+      this.connections.set(url, conn);
 
     relay.on('connect', () => {
       conn.status = 'connected';
@@ -83,22 +84,46 @@ class RelayManager {
   }
 
   async publish(event) {
+    let published = false;
     const results = [];
     
     for (const [url, conn] of this.connections) {
-      if (conn.status !== 'connected') continue;
+      if (conn.status !== 'connected') {
+        console.warn(`⏭️  Skipping ${url} (status: ${conn.status})`);
+        continue;
+      }
 
       try {
-        await conn.relay.publish(event);
-        results.push({ url, success: true });
+        await Promise.race([
+          conn.relay.publish(event),
+          new Promise((_, reject) =>
+            setTimeout(
+              () => reject(new Error(`Timeout (${this.publishTimeout}ms)`)),
+              this.publishTimeout
+            )
+          )
+        ]);
+
         console.log(`✅ Published to ${url}`);
+        results.push({ url, success: true });
+        published = true;
+
       } catch (err) {
+        console.warn(`⚠️ Failed to publish to ${url}: ${err.message}`);
         results.push({ url, success: false, error: err.message });
-        console.error(`❌ Failed to publish to ${url}:`, err.message);
       }
     }
 
-    return results;
+    if (published) {
+      console.log(`✅ Event published successfully`);
+    } else {
+      console.error(`❌ Failed to publish to all relays`);
+    }
+
+    return {
+      success: published,
+      results
+    };
   }
 
   getRelay(url) {

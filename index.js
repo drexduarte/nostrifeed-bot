@@ -37,7 +37,6 @@ let isRunning = false;
 let consecutiveErrors = 0;
 const MAX_CONSECUTIVE_ERRORS = 5;
 
-// Recarrega configuração dinamicamente
 watchConfig(() => {
   console.log('🔄 Configuration reloaded, reconnecting to relays...');
   initializeRelays();
@@ -51,9 +50,10 @@ async function initializeRelays() {
   }
   
   relayManager = new RelayManager(config.relays, {
-    reconnectDelay: 5000,
-    maxRetries: 3,
-    timeout: 10000
+    reconnectDelay: config.relayOptions?.reconnectDelay || 5000,
+    maxRetries: config.relayOptions?.maxRetries || 3,
+    timeout: config.relayOptions?.timeout || 10000,
+    publishTimeout: config.relayOptions?.publishTimeout || 5000
   });
   
   await relayManager.connectAll();
@@ -88,19 +88,16 @@ async function publishItem(item, feed, filters) {
   const normalizedLink = normalizeLink(item.link);
   const itemTitle = sanitizeHtml(item.title || '');
 
-  // Verifica duplicatas
   if (store.wasPublished(normalizedLink, itemTitle)) {
     console.log(`📌 Already published: ${itemTitle}`);
     return false;
   }
 
-  // Aplica filtros
   if (shouldFilterItem(item, filters)) {
     console.log(`⛔ Filtered: ${itemTitle}`);
     return false;
   }
 
-  // Extrai categoria
   let category = '';
   if (item.categories && item.categories.length > 0) {
     const first = item.categories[0];
@@ -109,21 +106,18 @@ async function publishItem(item, feed, filters) {
       : (first.value || first._ || '');
   }
 
-  // Monta conteúdo
   const content = [
     `📰 ${feed.name}`,
     itemTitle,
     normalizedLink,
-    `#news` + (category ? ` #${slugify(category)}` : '')
+    `#news` + (category ? ` #${slugify(category, { hashtagFriendly: true })}` : '')
   ].join('\n\n');
 
   try {
     const event = await createNostrEvent(content);
-    const results = await relayManager.publish(event);
-    
-    const successCount = results.filter(r => r.success).length;
-    
-    if (successCount > 0) {
+    const publishResult = await relayManager.publish(event);  
+    if (publishResult.success) {
+      const successCount = publishResult.results.filter(r => r.success).length;
       store.addPublishedLink(
         normalizedLink,
         getConfig().maxStoredLinks || 500,
@@ -131,8 +125,7 @@ async function publishItem(item, feed, filters) {
         slugify(feed.name),
         itemTitle
       );
-      
-      console.log(`✅ Published "${itemTitle}" to ${successCount}/${results.length} relays`);
+      console.log(`✅ Published "${itemTitle}" to ${successCount}/${publishResult.results.length} relays`);
       return true;
     } else {
       console.error(`❌ Failed to publish to any relay: ${itemTitle}`);
@@ -161,29 +154,30 @@ async function fetchAndPublish() {
     let totalProcessed = 0;
 
     for (const feed of config.feeds) {
+      if (!feed.enabled) {
+        console.log(`⏭️  Skipping disabled feed: ${feed.name}`);
+        continue;
+      }
+
       try {
         console.log(`\n📡 Fetching: ${feed.name}`);
         const feedContent = await fetchFeed(feed.url);
         const items = feedContent.items.slice(0, config.itemsPerFeed || 5);
-        
         for (const item of items) {
           totalProcessed++;
           const published = await publishItem(item, feed, config.filters || {});
-          
           if (published) {
             totalPublished++;
-            await delay(5000); // Rate limiting entre publicações
+            await delay(5000);
           }
         }
-        
-        await delay(2000); // Pequeno delay entre feeds
+        await delay(2000);
       } catch (err) {
         console.error(`❌ Error fetching feed ${feed.name}:`, err.message);
         consecutiveErrors++;
       }
     }
 
-    // Reset contador de erros em caso de sucesso
     if (totalPublished > 0) {
       consecutiveErrors = 0;
     }
@@ -243,7 +237,6 @@ process.on('unhandledRejection', (reason, promise) => {
   consecutiveErrors++;
 });
 
-// Inicialização
 async function init() {
   console.log('🤖 NostriFeed Bot v2.0');
   console.log(`🆔 Public Key: ${BOT_PUBLICKEY}`);
@@ -251,12 +244,11 @@ async function init() {
 
   await initializeRelays();
   respondToMentions(relayManager, BOT_PUBLICKEY, BOT_PRIVATEKEY, NIP05_ADDRESS);
-  
-  // Primeira execução imediata
+
   await fetchAndPublish();
-  
-  // Loop a cada 60 segundos
-  setInterval(fetchAndPublish, 60 * 1000);
+
+  const config = getConfig();
+  setInterval(fetchAndPublish, config.publishInterval * 1000);
 }
 
 init().catch(err => {
