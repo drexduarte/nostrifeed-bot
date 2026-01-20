@@ -1,5 +1,5 @@
 const { getPublicKey, getEventHash, getSignature, relayInit, nip19 } = require('nostr-tools');
-const fetch = require('node-fetch');
+const fetch = global.fetch || require('node-fetch');
 const { getConfig } = require('./config');
 require('dotenv').config();
 
