@@ -189,7 +189,7 @@ class Store {
     return {
       ...this.stats,
       totalStored: this.publishedLinks.length,
-      respondedEventsStored: this.respondedEvents.size
+      respondedEventsToday: this.respondedEvents.size
     };
   }
 
