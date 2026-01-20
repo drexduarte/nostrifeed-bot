@@ -52,15 +52,25 @@
       "name": "Ars Technica",
       "url": "https://feeds.arstechnica.com/arstechnica/index",
       "enabled": true
+    },
+    {
+      "name": "The Block",
+      "url": "https://www.theblock.co/rss.xml",
+      "enabled": true
+    },
+    {
+      "name": "Financial Times",
+      "url": "https://www.ft.com/rss/home",
+      "enabled": true
     }
   ],
 
   "relays": [
     "wss://relay.damus.io",
-    "wss://nostr-pub.wellorder.net",
     "wss://nostr.mom",
     "wss://relay.primal.net",
-    "wss://nos.lol"
+    "wss://nos.lol",
+    "wss://relay.mostr.pub"
   ],
 
   "relayOptions": {
