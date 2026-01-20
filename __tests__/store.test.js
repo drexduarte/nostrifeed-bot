@@ -266,7 +266,7 @@ describe('Store Module', () => {
       expect(stats).toHaveProperty('lastRun');
       expect(stats).toHaveProperty('feedStats');
       expect(stats).toHaveProperty('totalStored');
-      expect(stats).toHaveProperty('respondedEventsStored');
+      expect(stats).toHaveProperty('respondedEventsToday');
     });
 
     it('should track feed statistics', () => {

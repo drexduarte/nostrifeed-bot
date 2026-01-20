@@ -3,7 +3,6 @@ const { getConfig } = require('./config');
 const store = require('./store');
 const { slugify, formatTimestamp } = require('./utils');
 
-const COMMAND_PREFIX = '!';
 const subscriptions = new Map();
 const processingEvents = new Set();
 
@@ -194,10 +193,10 @@ async function handleCommand(event, botPubkey, botPrivkey, nip05, relayManager, 
   const replyEvent = buildReply(event, response, botPubkey, botPrivkey, nip05, relayUrl);
   
   try {
-    const results = await relayManager.publish(replyEvent);
+    const { success, results } = await relayManager.publish(replyEvent);
     const successCount = results.filter(r => r.success).length;
     
-    if (successCount > 0) {
+    if (success && successCount > 0) {
       store.addRespondedEvent(event.id);
       console.log(`✅ Replied to ${event.id.slice(0, 8)}... on ${successCount} relays`);
     } else {
@@ -274,5 +273,6 @@ module.exports = {
   parseCommand,
   respondToMentions,
   closeAllSubscriptions,
+  handleCommand,
   commands
 };

@@ -1,4 +1,4 @@
-const { parseCommand, commands } = require('../app/responder');
+const { parseCommand, handleCommand, commands } = require('../app/responder');
 
 // Mock dependencies
 jest.mock('../app/config');
@@ -8,7 +8,12 @@ const { getConfig } = require('../app/config');
 const store = require('../app/store');
 
 describe('Responder Module', () => {
-  
+  const botPubkey = 'botpubkey';
+  const botPrivkey = 'botprivkey';
+  const nip05 = 'botnip05';
+  const mockRelayUrl = 'wss://relay.example.com';
+  const relayManager = {};
+
   beforeEach(() => {
     jest.clearAllMocks();
     
@@ -313,6 +318,28 @@ describe('Responder Module', () => {
 
       const response = commands.latest('technology'); // Could be feed or category
       expect(response).toContain('Latest news from "technology"');
+    });
+  });
+
+  describe('event handling', () => {
+    it('should not respond to own events', async () => {
+      const event = { pubkey: 'botpubkey', id: 'event1' };
+
+      store.wasResponded.mockReturnValue(false);
+
+      await handleCommand(event, botPubkey, botPrivkey, nip05, relayManager, mockRelayUrl);
+
+      expect(store.wasResponded).not.toHaveBeenCalledWith(event.id);
+    });
+
+    it('should not respond to already responded events', async () => {
+      const event = { pubkey: 'pubkey', id: 'event1' };
+
+      store.wasResponded.mockReturnValue(true);
+
+      await handleCommand(event, botPubkey, botPrivkey, nip05, relayManager, mockRelayUrl);
+
+      expect(store.wasResponded).toHaveBeenCalledWith(event.id);
     });
   });
 });
