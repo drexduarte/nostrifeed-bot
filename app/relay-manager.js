@@ -8,6 +8,7 @@ class RelayManager {
     this.maxRetries = options.maxRetries || 3;
     this.timeout = options.timeout || 10000;
     this.publishTimeout = options.publishTimeout || 5000;
+    this.isShuttingDown = false;
   }
 
   async connect(url) {
@@ -67,6 +68,8 @@ class RelayManager {
   }
 
   scheduleReconnect(url) {
+    if(this.isShuttingDown) return;
+
     const conn = this.connections.get(url);
     if (!conn || conn.retries >= this.maxRetries) {
       console.error(`⛔ Max retries reached for ${url}`);
@@ -146,6 +149,7 @@ class RelayManager {
   }
 
   async closeAll() {
+    this.isShuttingDown = true;
     for (const [url, conn] of this.connections) {
       try {
         await conn.relay.close();
