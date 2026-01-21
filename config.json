@@ -1,7 +1,8 @@
 {
-  "botName": "NostriFeed Bot",
+  "botName": "nostrifeedbot",
+  "botDisplayName": "NostriFeed Bot",
   "botDescription": "📰 I sniff out the latest news from RSS feeds and drop it right into Nostr. No clickbait, just headlines!",
-  
+  "botPictureUrl": "https://files.catbox.moe/itjcqr.png",
   "feeds": [
     {
       "name": "CoinDesk",

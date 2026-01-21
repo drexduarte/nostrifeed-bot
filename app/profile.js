@@ -35,8 +35,10 @@ async function publishProfile() {
       tags: [],
       content: JSON.stringify({
         name: config.botName,
+        display_name: config.botDisplayName,
         about: config.botDescription,
         nip05: NIP05_ADDRESS,
+        picture: config.botPictureUrl
       }),
     };
   
