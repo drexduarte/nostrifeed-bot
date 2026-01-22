@@ -103,9 +103,7 @@
       "celebrity"
     ],
     "include_categories": [],
-    "exclude_domains": [
-      "spam-site.com"
-    ],
+    "exclude_domains": [],
     "min_title_length": 15,
     "max_title_length": 300,
     "date_filter": {
