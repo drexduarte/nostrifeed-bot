@@ -100,7 +100,9 @@
     "exclude_categories": [
       "entertainment",
       "sports",
-      "celebrity"
+      "celebrity",
+      "entretenimento",
+      "carnaval"
     ],
     "include_categories": [],
     "exclude_domains": [],
@@ -113,6 +115,6 @@
 
   "rateLimit": {
     "delayBetweenPosts": 5000,
-    "delayBetweenFeeds": 2000
+    "delayBetweenFeeds": 5000
   }
 }

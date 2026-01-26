@@ -168,10 +168,10 @@ async function fetchAndPublish() {
           const published = await publishItem(item, feed, config.filters || {});
           if (published) {
             totalPublished++;
-            await delay(5000);
+            await delay(config.rateLimit?.delayBetweenPosts || 5000);
           }
         }
-        await delay(2000);
+        await delay(config.rateLimit?.delayBetweenFeeds || 2000);
       } catch (err) {
         console.error(`❌ Error fetching feed ${feed.name}:`, err.message);
         consecutiveErrors++;
