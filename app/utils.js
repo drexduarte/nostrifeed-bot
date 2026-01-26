@@ -145,8 +145,23 @@ function formatTimestamp(timestamp) {
   return date.toISOString().replace('T', ' ').slice(0, 19);
 }
 
+async function delayWithJitter(baseMs, jitterPercent = 30) {
+  const maxVariation = (baseMs * jitterPercent) / 100;
+  const jitter = (Math.random() * 2 - 1) * maxVariation;
+  const finalDelay = Math.max(100, Math.floor(baseMs + jitter));
+  
+  console.log(`⏱️  Waiting ${(finalDelay / 1000).toFixed(2)}s (base: ${(baseMs / 1000).toFixed(2)}s, jitter: ${jitterPercent}%)`);
+  
+  return delay(finalDelay);
+}
+
+function randomBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 module.exports = {
   delay,
+  delayWithJitter,
   normalizeLink,
   generateContentHash,
   slugify,
@@ -155,5 +170,6 @@ module.exports = {
   isValidUrl,
   retryWithBackoff,
   extractDomain,
-  formatTimestamp
+  formatTimestamp,
+  randomBetween
 };

@@ -5,7 +5,8 @@ const { getPublicKey, getEventHash, getSignature } = require('nostr-tools');
 const { getConfig, watchConfig } = require('./app/config');
 const { shouldFilterItem } = require('./app/filters');
 const { 
-  delay, 
+  delay,
+  delayWithJitter,
   normalizeLink, 
   slugify, 
   sanitizeHtml, 
@@ -33,7 +34,6 @@ const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
 const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
 
 let relayManager;
-let isRunning = false;
 let consecutiveErrors = 0;
 const MAX_CONSECUTIVE_ERRORS = 5;
 
@@ -138,12 +138,6 @@ async function publishItem(item, feed, filters) {
 }
 
 async function fetchAndPublish() {
-  if (isRunning) {
-    console.log('⏭️ Previous run still in progress, skipping...');
-    return;
-  }
-
-  isRunning = true;
   const config = getConfig();
   const startTime = Date.now();
   
@@ -168,10 +162,12 @@ async function fetchAndPublish() {
           const published = await publishItem(item, feed, config.filters || {});
           if (published) {
             totalPublished++;
-            await delay(config.rateLimit?.delayBetweenPosts || 5000);
+            await delayWithJitter(config.rateLimit?.delayBetweenPosts || 5000,
+              config.rateLimit?.jitterPercent || 30);
           }
         }
-        await delay(config.rateLimit?.delayBetweenFeeds || 2000);
+        await delayWithJitter(config.rateLimit?.delayBetweenFeeds || 2000,
+          config.rateLimit?.jitterPercent || 30);
       } catch (err) {
         console.error(`❌ Error fetching feed ${feed.name}:`, err.message);
         consecutiveErrors++;
@@ -194,8 +190,6 @@ async function fetchAndPublish() {
       console.error(`🆘 Too many consecutive errors (${consecutiveErrors}). Attempting full restart...`);
       await restart();
     }
-  } finally {
-    isRunning = false;
   }
 }
 
@@ -237,6 +231,20 @@ process.on('unhandledRejection', (reason, promise) => {
   consecutiveErrors++;
 });
 
+async function scheduledLoop() {
+  const config = getConfig();
+  const intervalMs = (config.publishInterval || 180) * 1000;
+  
+  try {
+    await fetchAndPublish();
+  } catch (err) {
+    console.error('❌ Error in scheduled loop:', err);
+  }
+
+  console.log(`⏰ Next cycle in ${config.publishInterval}s...`);
+  setTimeout(scheduledLoop, intervalMs);
+}
+
 async function init() {
   console.log('🤖 NostriFeed Bot v2.0');
   console.log(`🆔 Public Key: ${BOT_PUBLICKEY}`);
@@ -245,10 +253,7 @@ async function init() {
   await initializeRelays();
   respondToMentions(relayManager, BOT_PUBLICKEY, BOT_PRIVATEKEY, NIP05_ADDRESS);
 
-  await fetchAndPublish();
-
-  const config = getConfig();
-  setInterval(fetchAndPublish, config.publishInterval * 1000);
+  scheduledLoop();
 }
 
 init().catch(err => {

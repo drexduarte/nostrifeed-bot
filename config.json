@@ -83,7 +83,7 @@
 
   "itemsPerFeed": 2,
   "maxStoredLinks": 1000,
-  "publishInterval": 60,
+  "publishInterval": 90,
 
   "filters": {
     "exclude_keywords": [
@@ -115,6 +115,7 @@
 
   "rateLimit": {
     "delayBetweenPosts": 5000,
-    "delayBetweenFeeds": 5000
+    "delayBetweenFeeds": 5000,
+    "jitterPercent": 30
   }
 }
