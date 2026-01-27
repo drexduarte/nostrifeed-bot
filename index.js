@@ -5,7 +5,6 @@ const { getPublicKey, getEventHash, getSignature } = require('nostr-tools');
 const { getConfig, watchConfig } = require('./app/config');
 const { shouldFilterItem } = require('./app/filters');
 const { 
-  delay,
   delayWithJitter,
   normalizeLink, 
   slugify, 
@@ -34,8 +33,7 @@ const NIP05_ADDRESS = process.env.NIP05_ADDRESS;
 const BOT_PUBLICKEY = getPublicKey(BOT_PRIVATEKEY);
 
 let relayManager;
-let consecutiveErrors = 0;
-const MAX_CONSECUTIVE_ERRORS = 5;
+let ciclesSinceLastPublish = 0;
 
 watchConfig(() => {
   console.log('🔄 Configuration reloaded, reconnecting to relays...');
@@ -53,7 +51,8 @@ async function initializeRelays() {
     reconnectDelay: config.relayOptions?.reconnectDelay || 5000,
     maxRetries: config.relayOptions?.maxRetries || 3,
     timeout: config.relayOptions?.timeout || 10000,
-    publishTimeout: config.relayOptions?.publishTimeout || 5000
+    publishTimeout: config.relayOptions?.publishTimeout || 5000,
+    maxPublishErrors: config.relayOptions?.maxPublishErrors || 3
   });
   
   await relayManager.connectAll();
@@ -128,7 +127,7 @@ async function publishItem(item, feed, filters) {
       console.log(`✅ Published "${itemTitle}" to ${successCount}/${publishResult.results.length} relays`);
       return true;
     } else {
-      console.error(`❌ Failed to publish to any relay: ${itemTitle}`);
+      console.error(`❌ Failed to publish to all relays: ${itemTitle}`);
       return false;
     }
   } catch (err) {
@@ -142,60 +141,53 @@ async function fetchAndPublish() {
   const startTime = Date.now();
   
   console.log('\n🚀 Starting feed fetch cycle...');
+  let totalPublished = 0;
+  let totalProcessed = 0;
 
-  try {
-    let totalPublished = 0;
-    let totalProcessed = 0;
+  for (const feed of config.feeds) {
+    if (!feed.enabled) {
+      console.log(`⏭️  Skipping disabled feed: ${feed.name}`);
+      continue;
+    }
 
-    for (const feed of config.feeds) {
-      if (!feed.enabled) {
-        console.log(`⏭️  Skipping disabled feed: ${feed.name}`);
-        continue;
-      }
-
-      try {
-        console.log(`\n📡 Fetching: ${feed.name}`);
-        const feedContent = await fetchFeed(feed.url);
-        const items = feedContent.items.slice(0, config.itemsPerFeed || 5);
-        for (const item of items) {
-          totalProcessed++;
-          const published = await publishItem(item, feed, config.filters || {});
-          if (published) {
-            totalPublished++;
-            await delayWithJitter(config.rateLimit?.delayBetweenPosts || 5000,
-              config.rateLimit?.jitterPercent || 30);
-          }
+    try {
+      console.log(`\n📡 Fetching: ${feed.name}`);
+      const feedContent = await fetchFeed(feed.url);
+      const items = feedContent.items.slice(0, config.itemsPerFeed || 5);
+      for (const item of items) {
+        totalProcessed++;
+        const published = await publishItem(item, feed, config.filters || {});
+        if (published) {
+          totalPublished++;
+          await delayWithJitter(config.rateLimit?.delayBetweenPosts || 5000,
+            config.rateLimit?.jitterPercent || 30);
         }
-        await delayWithJitter(config.rateLimit?.delayBetweenFeeds || 2000,
-          config.rateLimit?.jitterPercent || 30);
-      } catch (err) {
-        console.error(`❌ Error fetching feed ${feed.name}:`, err.message);
-        consecutiveErrors++;
       }
-    }
-
-    if (totalPublished > 0) {
-      consecutiveErrors = 0;
-    }
-
-    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    console.log(`\n✅ Cycle complete: ${totalPublished}/${totalProcessed} published in ${duration}s`);
-    console.log(`📊 Stats: ${JSON.stringify(store.getStats(), null, 2)}`);
-
-  } catch (err) {
-    console.error('❌ Critical error in fetch cycle:', err);
-    consecutiveErrors++;
-    
-    if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-      console.error(`🆘 Too many consecutive errors (${consecutiveErrors}). Attempting full restart...`);
-      await restart();
+      if(totalPublished > 0) {
+        await delayWithJitter(config.rateLimit?.delayBetweenFeeds || 5000,
+          config.rateLimit?.jitterPercent || 30);
+      }
+    } catch (err) {
+      console.error(`❌ Error fetching feed ${feed.name}:`, err.message);
     }
   }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`\n✅ Cycle complete: ${totalPublished}/${totalProcessed} published in ${duration}s`);
+
+  if (totalPublished > 0) {
+    ciclesSinceLastPublish = 0;
+  } else {
+    ciclesSinceLastPublish++;
+    console.log(`ℹ️ No new items published this cycle. Consecutive cycles without publish: ${ciclesSinceLastPublish}`);
+  }
+
+  console.log(`📊 Stats: ${JSON.stringify(store.getStats(), null, 2)}\n`);
 }
 
 async function restart() {
   console.log('🔄 Restarting bot...');
-  consecutiveErrors = 0;
+  ciclesSinceLastPublish = 0;
   
   try {
     await initializeRelays();
@@ -223,12 +215,12 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 // Handler para erros não capturados
 process.on('uncaughtException', (err) => {
   console.error('💥 Uncaught exception:', err);
-  consecutiveErrors++;
+  restart().catch(() => {});
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('💥 Unhandled rejection at:', promise, 'reason:', reason);
-  consecutiveErrors++;
+  restart().catch(() => {});
 });
 
 async function scheduledLoop() {
