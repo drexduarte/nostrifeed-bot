@@ -9,6 +9,7 @@ class RelayManager {
     this.timeout = options.timeout || 10000;
     this.publishTimeout = options.publishTimeout || 5000;
     this.isShuttingDown = false;
+    this.maxPublishErrors = options.maxPublishErrors || 3;
   }
 
   async connect(url) {
@@ -20,7 +21,7 @@ class RelayManager {
     }
    
     if(!conn){
-      conn = { status: 'connecting', retries: 0, reconnectTimer: null };
+      conn = { status: 'connecting', retries: 0, reconnectTimer: null, publishErrors: 0 };
       this.connections.set(url, conn);
     }
 
@@ -30,6 +31,7 @@ class RelayManager {
     relay.on('connect', () => {
       conn.status = 'connected';
       conn.retries = 0;
+      conn.publishErrors = 0;
       if (conn.reconnectTimer) {
         clearTimeout(conn.reconnectTimer);
         conn.reconnectTimer = null;
@@ -127,6 +129,11 @@ class RelayManager {
 
       } catch (err) {
         console.warn(`⚠️ Failed to publish to ${url}: ${err.message}`);
+        conn.publishErrors++;
+        if (conn.publishErrors >= this.maxPublishErrors) {
+          console.error(`⛔ Max publish errors reached for ${url}, disabling relay.`);
+          conn.status = 'disabled';
+        }
         results.push({ url, success: false, error: err.message });
       }
     }

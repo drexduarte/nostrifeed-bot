@@ -78,7 +78,8 @@
     "maxRetries": 3,
     "reconnectDelay": 5000,
     "timeout": 10000,
-    "publishTimeout": 5000
+    "publishTimeout": 5000,
+    "maxPublishErrors": 3
   },
 
   "itemsPerFeed": 2,
