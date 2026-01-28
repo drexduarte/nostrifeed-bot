@@ -225,7 +225,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 async function scheduledLoop() {
   const config = getConfig();
-  const intervalMs = (config.publishInterval || 180) * 1000;
+  const intervalMs = (config.rateLimit?.publishInterval || 180) * 1000;
   
   try {
     await fetchAndPublish();
@@ -233,7 +233,7 @@ async function scheduledLoop() {
     console.error('❌ Error in scheduled loop:', err);
   }
 
-  console.log(`⏰ Next cycle in ${config.publishInterval}s...`);
+  console.log(`⏰ Next cycle in ${config.rateLimit?.publishInterval}s...`);
   setTimeout(scheduledLoop, intervalMs);
 }
 
