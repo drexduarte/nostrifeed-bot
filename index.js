@@ -18,7 +18,7 @@ const { respondToMentions } = require('./app/responder');
 const parser = new Parser({
   requestOptions: {
     headers: {
-      'User-Agent': 'NostriFeedBot/2.0 (+https://github.com/drexduarte/nostrifeed-bot)',
+      'User-Agent': 'Mozilla/5.0 (compatible; NostriFeedBot/2.0; +https://github.com/drexduarte/nostrifeed-bot)',
       'Accept': 'application/rss+xml, application/xml;q=0.9, */*;q=0.8'
     },
     timeout: 10000
