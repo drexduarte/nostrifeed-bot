@@ -141,13 +141,26 @@ class RelayManager {
     if (published) {
       console.log(`✅ Event published successfully`);
     } else {
-      console.error(`❌ Failed to publish to all relays`);
+      console.error(`❌ Failed to publish to all relays. Checking connections in background...`);
+      this.healthCheck();
     }
 
     return {
       success: published,
       results
     };
+  }
+
+  async healthCheck() {
+    const status = this.getStatus();
+    const allDisconnected = Object.values(status).every(s => !['connected', 'connecting'].includes(s.status));
+    if (allDisconnected) {
+      console.log(`🔄 All relays disconnected, attempting to reconnect...`);
+      await this.connectAll();
+      return this.getStatus();
+    }
+    console.log(`📊 Health check: ${JSON.stringify(status, null, 2)}\n`);
+    return status;
   }
 
   getRelay(url) {
